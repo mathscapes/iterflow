@@ -92,3 +92,18 @@ temp/
 
 # TypeDoc generated documentation
 docs/api-generated/
+
+benchmarks/
+docs/
+examples/
+packages/
+scripts/
+templates/
+test-d/
+tests/
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+package-lock.json
+SECURITY.md
+typedoc.json
+vitest.config.ts

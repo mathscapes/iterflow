@@ -7,13 +7,13 @@ import { validateRange, validatePositiveInteger } from "./validation.js";
  * @template T The type of elements in the iterator
  * @example
  * ```typescript
- * const result = new IterFlow([1, 2, 3, 4, 5])
+ * const result = new iterflow([1, 2, 3, 4, 5])
  *   .filter(x => x % 2 === 0)
  *   .map(x => x * 2)
  *   .toArray(); // [4, 8]
  * ```
  */
-export class IterFlow<T> implements Iterable<T> {
+export class iterflow<T> implements Iterable<T> {
   private source: Iterator<T>;
 
   /**
@@ -22,8 +22,8 @@ export class IterFlow<T> implements Iterable<T> {
    * @param source - The source iterable or iterator to wrap
    * @example
    * ```typescript
-   * const flow1 = new IterFlow([1, 2, 3]);
-   * const flow2 = new IterFlow(someIterator);
+   * const flow1 = new iterflow([1, 2, 3]);
+   * const flow2 = new iterflow(someIterator);
    * ```
    */
   constructor(source: Iterable<T> | Iterator<T>) {
@@ -63,9 +63,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3]).map(x => x * 2).toArray(); // [2, 4, 6]
    * ```
    */
-  map<U>(fn: (value: T) => U): IterFlow<U> {
+  map<U>(fn: (value: T) => U): iterflow<U> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const value of self) {
           yield fn(value);
@@ -85,9 +85,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3, 4]).filter(x => x % 2 === 0).toArray(); // [2, 4]
    * ```
    */
-  filter(predicate: (value: T) => boolean): IterFlow<T> {
+  filter(predicate: (value: T) => boolean): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const value of self) {
           if (predicate(value)) {
@@ -108,9 +108,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3, 4, 5]).take(3).toArray(); // [1, 2, 3]
    * ```
    */
-  take(limit: number): IterFlow<T> {
+  take(limit: number): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let count = 0;
         for (const value of self) {
@@ -132,9 +132,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3, 4, 5]).drop(2).toArray(); // [3, 4, 5]
    * ```
    */
-  drop(count: number): IterFlow<T> {
+  drop(count: number): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let dropped = 0;
         for (const value of self) {
@@ -159,9 +159,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3]).flatMap(x => [x, x * 2]).toArray(); // [1, 2, 2, 4, 3, 6]
    * ```
    */
-  flatMap<U>(fn: (value: T) => Iterable<U>): IterFlow<U> {
+  flatMap<U>(fn: (value: T) => Iterable<U>): iterflow<U> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const value of self) {
           yield* fn(value);
@@ -182,9 +182,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [1, 2, 3, 4, 5, 6]
    * ```
    */
-  concat(...iterables: Iterable<T>[]): IterFlow<T> {
+  concat(...iterables: Iterable<T>[]): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         yield* self;
         for (const iterable of iterables) {
@@ -208,9 +208,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // ['a', '-', 'b', '-', 'c']
    * ```
    */
-  intersperse(separator: T): IterFlow<T> {
+  intersperse(separator: T): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let isFirst = true;
         for (const value of self) {
@@ -240,9 +240,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [1, 1, 2, 6]
    * ```
    */
-  scan<U>(fn: (accumulator: U, value: T) => U, initial: U): IterFlow<U> {
+  scan<U>(fn: (accumulator: U, value: T) => U, initial: U): iterflow<U> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let accumulator = initial;
         yield accumulator;
@@ -265,9 +265,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [[0, 'a'], [1, 'b'], [2, 'c']]
    * ```
    */
-  enumerate(): IterFlow<[number, T]> {
+  enumerate(): iterflow<[number, T]> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let index = 0;
         for (const value of self) {
@@ -290,9 +290,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [5, 4, 3, 2, 1]
    * ```
    */
-  reverse(): IterFlow<T> {
+  reverse(): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const buffer = Array.from(self);
         for (let i = buffer.length - 1; i >= 0; i--) {
@@ -318,9 +318,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // ['a', 'b', 'c']
    * ```
    */
-  sort(this: IterFlow<number | string>): IterFlow<number | string> {
+  sort(this: iterflow<number | string>): iterflow<number | string> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const buffer = Array.from(self);
         buffer.sort((a, b) => {
@@ -351,9 +351,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // ['bob', 'alice', 'charlie']
    * ```
    */
-  sortBy(compareFn: (a: T, b: T) => number): IterFlow<T> {
+  sortBy(compareFn: (a: T, b: T) => number): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const buffer = Array.from(self);
         buffer.sort(compareFn);
@@ -408,7 +408,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3, 4, 5]).sum(); // 15
    * ```
    */
-  sum(this: IterFlow<number>): number {
+  sum(this: iterflow<number>): number {
     let total = 0;
     for (const value of this) {
       total += value;
@@ -429,7 +429,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).mean(); // undefined
    * ```
    */
-  mean(this: IterFlow<number>): number | undefined {
+  mean(this: iterflow<number>): number | undefined {
     let total = 0;
     let count = 0;
     for (const value of this) {
@@ -452,7 +452,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).min(); // undefined
    * ```
    */
-  min(this: IterFlow<number>): number | undefined {
+  min(this: iterflow<number>): number | undefined {
     let minimum: number | undefined = undefined;
     for (const value of this) {
       if (minimum === undefined || value < minimum) {
@@ -475,7 +475,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).max(); // undefined
    * ```
    */
-  max(this: IterFlow<number>): number | undefined {
+  max(this: iterflow<number>): number | undefined {
     let maximum: number | undefined = undefined;
     for (const value of this) {
       if (maximum === undefined || value > maximum) {
@@ -500,7 +500,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).median(); // undefined
    * ```
    */
-  median(this: IterFlow<number>): number | undefined {
+  median(this: iterflow<number>): number | undefined {
     const values = this.toArray();
     if (values.length === 0) return undefined;
 
@@ -528,7 +528,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).variance(); // undefined
    * ```
    */
-  variance(this: IterFlow<number>): number | undefined {
+  variance(this: iterflow<number>): number | undefined {
     const values = this.toArray();
     if (values.length === 0) return undefined;
 
@@ -559,7 +559,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).stdDev(); // undefined
    * ```
    */
-  stdDev(this: IterFlow<number>): number | undefined {
+  stdDev(this: iterflow<number>): number | undefined {
     const variance = this.variance();
     return variance === undefined ? undefined : Math.sqrt(variance);
   }
@@ -581,7 +581,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).percentile(50); // undefined
    * ```
    */
-  percentile(this: IterFlow<number>, p: number): number | undefined {
+  percentile(this: iterflow<number>, p: number): number | undefined {
     validateRange(p, 0, 100, "percentile", "percentile");
 
     const values = this.toArray();
@@ -619,7 +619,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).mode(); // undefined
    * ```
    */
-  mode(this: IterFlow<number>): number[] | undefined {
+  mode(this: iterflow<number>): number[] | undefined {
     const values = this.toArray();
     if (values.length === 0) return undefined;
 
@@ -658,7 +658,7 @@ export class IterFlow<T> implements Iterable<T> {
    * ```
    */
   quartiles(
-    this: IterFlow<number>,
+    this: iterflow<number>,
   ): { Q1: number; Q2: number; Q3: number } | undefined {
     const values = this.toArray();
     if (values.length === 0) return undefined;
@@ -702,7 +702,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).span(); // undefined
    * ```
    */
-  span(this: IterFlow<number>): number | undefined {
+  span(this: iterflow<number>): number | undefined {
     let minimum: number | undefined = undefined;
     let maximum: number | undefined = undefined;
 
@@ -734,7 +734,7 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([]).product(); // 1
    * ```
    */
-  product(this: IterFlow<number>): number {
+  product(this: iterflow<number>): number {
     let result = 1;
     for (const value of this) {
       result *= value;
@@ -758,7 +758,7 @@ export class IterFlow<T> implements Iterable<T> {
    * ```
    */
   covariance(
-    this: IterFlow<number>,
+    this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
     const values1 = this.toArray();
@@ -801,7 +801,7 @@ export class IterFlow<T> implements Iterable<T> {
    * ```
    */
   correlation(
-    this: IterFlow<number>,
+    this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
     const values1 = this.toArray();
@@ -854,11 +854,11 @@ export class IterFlow<T> implements Iterable<T> {
    * // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
    * ```
    */
-  window(size: number): IterFlow<T[]> {
+  window(size: number): iterflow<T[]> {
     validatePositiveInteger(size, "size", "window");
 
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         // Use circular buffer to avoid O(n) shift() operations
         const buffer: T[] = new Array(size);
@@ -896,11 +896,11 @@ export class IterFlow<T> implements Iterable<T> {
    * // [[1, 2], [3, 4], [5]]
    * ```
    */
-  chunk(size: number): IterFlow<T[]> {
+  chunk(size: number): iterflow<T[]> {
     validatePositiveInteger(size, "size", "chunk");
 
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         // Preallocate buffer to avoid dynamic resizing
         let buffer: T[] = new Array(size);
@@ -935,7 +935,7 @@ export class IterFlow<T> implements Iterable<T> {
    * // [[1, 2], [2, 3], [3, 4]]
    * ```
    */
-  pairwise(): IterFlow<[T, T]> {
+  pairwise(): iterflow<[T, T]> {
     return this.window(2).map((arr) => [arr[0]!, arr[1]!] as [T, T]);
   }
 
@@ -951,9 +951,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [1, 2, 3, 4]
    * ```
    */
-  distinct(): IterFlow<T> {
+  distinct(): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const seen = new Set<T>();
 
@@ -981,9 +981,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [{id: 1, name: 'Alice'}, {id: 2, name: 'Bob'}]
    * ```
    */
-  distinctBy<K>(keyFn: (value: T) => K): IterFlow<T> {
+  distinctBy<K>(keyFn: (value: T) => K): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const seenKeys = new Set<K>();
 
@@ -1013,9 +1013,9 @@ export class IterFlow<T> implements Iterable<T> {
    *   .toArray(); // logs each value, returns [2, 4, 6]
    * ```
    */
-  tap(fn: (value: T) => void): IterFlow<T> {
+  tap(fn: (value: T) => void): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const value of self) {
           fn(value);
@@ -1037,9 +1037,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [1, 2, 3]
    * ```
    */
-  takeWhile(predicate: (value: T) => boolean): IterFlow<T> {
+  takeWhile(predicate: (value: T) => boolean): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const value of self) {
           if (!predicate(value)) break;
@@ -1061,9 +1061,9 @@ export class IterFlow<T> implements Iterable<T> {
    * // [3, 4, 1, 2]
    * ```
    */
-  dropWhile(predicate: (value: T) => boolean): IterFlow<T> {
+  dropWhile(predicate: (value: T) => boolean): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         let dropping = true;
         for (const value of self) {
@@ -1371,7 +1371,7 @@ export class IterFlow<T> implements Iterable<T> {
    * Alias for stdDev() method for compatibility.
    * Calculates the standard deviation of all numeric elements.
    */
-  stddev(this: IterFlow<number>): number | undefined {
+  stddev(this: iterflow<number>): number | undefined {
     return this.stdDev();
   }
 
@@ -1379,7 +1379,7 @@ export class IterFlow<T> implements Iterable<T> {
    * Alias for drop() method for compatibility.
    * Skips the first `count` elements from the iterator.
    */
-  skip(count: number): IterFlow<T> {
+  skip(count: number): iterflow<T> {
     return this.drop(count);
   }
 
@@ -1394,9 +1394,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 2, 3]).interleave([4, 5, 6]).toArray(); // [1, 4, 2, 5, 3, 6]
    * ```
    */
-  interleave(...others: Iterable<T>[]): IterFlow<T> {
+  interleave(...others: Iterable<T>[]): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const allIterables = [self, ...others];
         if (allIterables.length === 0) return;
@@ -1431,9 +1431,9 @@ export class IterFlow<T> implements Iterable<T> {
    * iter([1, 3, 5]).merge([2, 4, 6]).toArray(); // [1, 2, 3, 4, 5, 6]
    * ```
    */
-  merge(...others: Iterable<T>[]): IterFlow<T> {
+  merge(...others: Iterable<T>[]): iterflow<T> {
     const self = this;
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         const allIterables = [self, ...others];
         if (allIterables.length === 0) return;

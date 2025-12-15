@@ -1,5 +1,5 @@
 /**
- * Error recovery utilities for IterFlow
+ * Error recovery utilities for iterflow
  * @module recovery
  */
 

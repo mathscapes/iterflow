@@ -1,5 +1,5 @@
 /**
- * Input validation utilities for IterFlow operations
+ * Input validation utilities for iterflow operations
  * @module validation
  */
 

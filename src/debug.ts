@@ -1,5 +1,5 @@
 /**
- * Debug mode and operation tracing utilities for IterFlow
+ * Debug mode and operation tracing utilities for iterflow
  * @module debug
  */
 
@@ -55,7 +55,7 @@ class DebugState {
     };
 
     if (this.config.logToConsole) {
-      console.log("[IterFlow Debug] Debug mode enabled", this.config);
+      console.log("[iterflow Debug] Debug mode enabled", this.config);
     }
   }
 
@@ -67,7 +67,7 @@ class DebugState {
     this.config.traceOperations = false;
 
     if (this.config.logToConsole) {
-      console.log("[IterFlow Debug] Debug mode disabled");
+      console.log("[iterflow Debug] Debug mode disabled");
     }
   }
 
@@ -119,7 +119,7 @@ class DebugState {
     this.traces = [];
 
     if (this.config.logToConsole) {
-      console.log("[IterFlow Debug] Traces cleared");
+      console.log("[iterflow Debug] Traces cleared");
     }
   }
 
@@ -186,12 +186,12 @@ class DebugState {
 
     if (entry.error) {
       console.error(
-        `[IterFlow Debug] ${timestamp} | ${entry.operation} | ERROR | ${duration}`,
+        `[iterflow Debug] ${timestamp} | ${entry.operation} | ERROR | ${duration}`,
         entry.error,
       );
     } else {
       console.log(
-        `[IterFlow Debug] ${timestamp} | ${entry.operation} | ${duration}`,
+        `[iterflow Debug] ${timestamp} | ${entry.operation} | ${duration}`,
       );
 
       if (this.config.traceInput && entry.input !== undefined) {

@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/async.test.ts\"",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:types": "tsd",

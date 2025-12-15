@@ -1,12 +1,12 @@
 /**
- * Error handling utilities and custom error classes for IterFlow
+ * Error handling utilities and custom error classes for iterflow
  * @module errors
  */
 
 /**
- * Base error class for all IterFlow errors
+ * Base error class for all iterflow errors
  */
-export class IterFlowError extends Error {
+export class iterflowError extends Error {
   public readonly operation?: string;
   public readonly context?: Record<string, unknown>;
 
@@ -16,7 +16,7 @@ export class IterFlowError extends Error {
     context?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = "IterFlowError";
+    this.name = "iterflowError";
     this.operation = operation;
     this.context = context;
 
@@ -54,7 +54,7 @@ export class IterFlowError extends Error {
 /**
  * Error thrown when operation parameters are invalid
  */
-export class ValidationError extends IterFlowError {
+export class ValidationError extends iterflowError {
   constructor(
     message: string,
     operation?: string,
@@ -68,7 +68,7 @@ export class ValidationError extends IterFlowError {
 /**
  * Error thrown when an operation fails during execution
  */
-export class OperationError extends IterFlowError {
+export class OperationError extends iterflowError {
   public readonly cause?: Error;
 
   constructor(
@@ -99,7 +99,7 @@ export class OperationError extends IterFlowError {
 /**
  * Error thrown when an operation requires a non-empty sequence
  */
-export class EmptySequenceError extends IterFlowError {
+export class EmptySequenceError extends iterflowError {
   constructor(operation: string, message?: string) {
     super(
       message || `Operation '${operation}' requires a non-empty sequence`,
@@ -112,7 +112,7 @@ export class EmptySequenceError extends IterFlowError {
 /**
  * Error thrown when accessing an invalid index
  */
-export class IndexOutOfBoundsError extends IterFlowError {
+export class IndexOutOfBoundsError extends iterflowError {
   public readonly index: number;
   public readonly size?: number;
 
@@ -131,7 +131,7 @@ export class IndexOutOfBoundsError extends IterFlowError {
 /**
  * Error thrown when a type conversion or coercion fails
  */
-export class TypeConversionError extends IterFlowError {
+export class TypeConversionError extends iterflowError {
   public readonly value: unknown;
   public readonly expectedType: string;
 

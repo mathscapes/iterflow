@@ -1,4 +1,4 @@
-import { IterFlow } from "./iter-flow.js";
+import { iterflow } from "./iter-flow.js";
 import { validateNonZero } from "./validation.js";
 
 /**
@@ -16,8 +16,8 @@ import { validateNonZero } from "./validation.js";
  *   .toArray(); // [4, 8]
  * ```
  */
-export function iter<T>(source: Iterable<T>): IterFlow<T> {
-  return new IterFlow(source);
+export function iter<T>(source: Iterable<T>): iterflow<T> {
+  return new iterflow(source);
 }
 
 // Static helper methods namespace
@@ -40,8 +40,8 @@ export namespace iter {
   export function zip<T, U>(
     iter1: Iterable<T>,
     iter2: Iterable<U>,
-  ): IterFlow<[T, U]> {
-    return new IterFlow({
+  ): iterflow<[T, U]> {
+    return new iterflow({
       *[Symbol.iterator]() {
         const it1 = iter1[Symbol.iterator]();
         const it2 = iter2[Symbol.iterator]();
@@ -81,7 +81,7 @@ export namespace iter {
     iter1: Iterable<T>,
     iter2: Iterable<U>,
     fn: (a: T, b: U) => R,
-  ): IterFlow<R> {
+  ): iterflow<R> {
     return zip(iter1, iter2).map(([a, b]) => fn(a, b));
   }
 
@@ -103,7 +103,7 @@ export namespace iter {
    * iter.range(5, 0, -1).toArray(); // [5, 4, 3, 2, 1]
    * ```
    */
-  export function range(stop: number): IterFlow<number>;
+  export function range(stop: number): iterflow<number>;
   /**
    * Generates a sequence of numbers from start to stop (exclusive).
    *
@@ -111,7 +111,7 @@ export namespace iter {
    * @param stop - The end value (exclusive)
    * @returns A new iterflow of numbers
    */
-  export function range(start: number, stop: number): IterFlow<number>;
+  export function range(start: number, stop: number): iterflow<number>;
   /**
    * Generates a sequence of numbers from start to stop (exclusive) with a custom step.
    *
@@ -124,16 +124,16 @@ export namespace iter {
     start: number,
     stop: number,
     step: number,
-  ): IterFlow<number>;
+  ): iterflow<number>;
   export function range(
     startOrStop: number,
     stop?: number,
     step = 1,
-  ): IterFlow<number> {
+  ): iterflow<number> {
     const actualStart = stop === undefined ? 0 : startOrStop;
     const actualStop = stop === undefined ? startOrStop : stop;
 
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         validateNonZero(step, "step", "range");
 
@@ -165,8 +165,8 @@ export namespace iter {
    * iter.repeat(1).take(3).toArray(); // [1, 1, 1] (infinite, limited by take)
    * ```
    */
-  export function repeat<T>(value: T, times?: number): IterFlow<T> {
-    return new IterFlow({
+  export function repeat<T>(value: T, times?: number): iterflow<T> {
+    return new iterflow({
       *[Symbol.iterator]() {
         if (times === undefined) {
           while (true) {
@@ -196,8 +196,8 @@ export namespace iter {
    * // [1, 3, 6, 2, 4, 5]
    * ```
    */
-  export function interleave<T>(...iterables: Iterable<T>[]): IterFlow<T> {
-    return new IterFlow({
+  export function interleave<T>(...iterables: Iterable<T>[]): iterflow<T> {
+    return new iterflow({
       *[Symbol.iterator]() {
         if (iterables.length === 0) return;
 
@@ -237,14 +237,14 @@ export namespace iter {
    * // [1, 2, 3, 5, 6, 7, 9, 10, 11]
    * ```
    */
-  export function merge<T>(...iterables: Iterable<T>[]): IterFlow<T>;
+  export function merge<T>(...iterables: Iterable<T>[]): iterflow<T>;
   export function merge<T>(
     compareFn: (a: T, b: T) => number,
     ...iterables: Iterable<T>[]
-  ): IterFlow<T>;
+  ): iterflow<T>;
   export function merge<T>(
     ...args: (Iterable<T> | ((a: T, b: T) => number))[]
-  ): IterFlow<T> {
+  ): iterflow<T> {
     let compareFn: (a: T, b: T) => number;
     let iterables: Iterable<T>[];
 
@@ -262,7 +262,7 @@ export namespace iter {
       iterables = args as Iterable<T>[];
     }
 
-    return new IterFlow({
+    return new iterflow({
       *[Symbol.iterator]() {
         if (iterables.length === 0) return;
 
@@ -353,8 +353,8 @@ export namespace iter {
    * // [1, 2, 3, 4, 5, 6]
    * ```
    */
-  export function chain<T>(...iterables: Iterable<T>[]): IterFlow<T> {
-    return new IterFlow({
+  export function chain<T>(...iterables: Iterable<T>[]): iterflow<T> {
+    return new iterflow({
       *[Symbol.iterator]() {
         for (const iterable of iterables) {
           yield* iterable;
@@ -365,14 +365,14 @@ export namespace iter {
 }
 
 // Export the sync class
-export { IterFlow } from "./iter-flow.js";
+export { iterflow } from "./iter-flow.js";
 
 // Export async functionality
-export { AsyncIterflow, asyncIter } from "./async-iter-flow.js";
+export { Asynciterflow, asyncIter } from "./async-iter-flow.js";
 
 // Export error handling
 export {
-  IterFlowError,
+  iterflowError,
   ValidationError,
   OperationError,
   EmptySequenceError,
