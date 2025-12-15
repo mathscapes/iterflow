@@ -1,0 +1,109 @@
+{
+  "name": "iterflow",
+  "version": "0.2.1",
+  "description": "Powerful iterator utilities for ES2022+ with statistical operations, windowing, and lazy evaluation. Forward compatible with ES2025 iterator helpers.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./fn": {
+      "types": "./dist/fn/index.d.ts",
+      "import": "./dist/fn/index.js",
+      "require": "./dist/fn/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:types": "tsd",
+    "bench": "vitest bench",
+    "bench:transformations": "vitest bench benchmarks/transformations.bench.ts",
+    "bench:terminals": "vitest bench benchmarks/terminals.bench.ts",
+    "bench:statistics": "vitest bench benchmarks/statistics.bench.ts",
+    "bench:windowing": "vitest bench benchmarks/windowing.bench.ts",
+    "bench:lazy": "vitest bench benchmarks/lazy-evaluation.bench.ts",
+    "bench:memory": "vitest bench benchmarks/memory-profiling.bench.ts",
+    "bench:production": "vitest bench benchmarks/production-profiling.bench.ts",
+    "test:production": "vitest run tests/production/",
+    "profile:production": "node scripts/production-profiler.js",
+    "analyze:bundle": "bash scripts/analyze-bundle.sh",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "docs": "typedoc src/index.ts",
+    "security": "bash scripts/security-check.sh",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:fix": "npm audit fix",
+    "changelog": "node scripts/generate-changelog.js",
+    "release": "node scripts/release.js",
+    "validate-commits": "node scripts/validate-commits.js",
+    "prepublishOnly": "npm run build && npm test && npm run test:types"
+  },
+  "keywords": [
+    "iterator",
+    "iterable",
+    "helpers",
+    "utilities",
+    "es2022",
+    "es2025",
+    "typescript",
+    "functional",
+    "statistics",
+    "windowing",
+    "lazy",
+    "stream",
+    "pipeline",
+    "data-processing",
+    "collection",
+    "aggregation",
+    "mean",
+    "median",
+    "variance",
+    "tree-shakeable"
+  ],
+  "author": {
+    "name": "Gaurav Singh",
+    "email": "hi@gvsh.cc",
+    "url": "https://github.com/gv-sh"
+  },
+  "license": "Unlicense",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mathscapes/iterflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mathscapes/iterflow/issues"
+  },
+  "homepage": "https://github.com/mathscapes/iterflow#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^20.0.0",
+    "@types/ramda": "^0.31.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.0.0",
+    "fast-check": "^4.3.0",
+    "lodash": "^4.17.21",
+    "prettier": "^3.0.0",
+    "ramda": "^0.32.0",
+    "tsd": "^0.33.0",
+    "tsup": "^8.0.0",
+    "typedoc": "^0.26.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
