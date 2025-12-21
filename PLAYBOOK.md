@@ -149,3 +149,10 @@ Maintain >90% test coverage for new code.
    git merge main --no-ff -m "chore: sync version from release"
    git push origin dev
    ```
+
+### Announce Release
+
+Share on X/Twitter:
+```
+Release iterflow [VERSION] - [HIGHLIGHTS]. https://npmjs.com/package/iterflow/v/[VERSION]
+```
