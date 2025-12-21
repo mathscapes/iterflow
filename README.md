@@ -223,6 +223,9 @@ const movingAverages = iter(temperatures)
   .toArray();
 ```
 
+<!-- BENCHMARK_SUMMARY_START -->
+<!-- BENCHMARK_SUMMARY_END -->
+
 ## License
 
 The Unlicense - See [LICENSE](LICENSE) for details.

@@ -52,7 +52,7 @@ npm run test:coverage
 ### 1.3 Run Type Checking
 
 ```bash
-npm run type-check
+npm run test:types
 ```
 
 **Expected:** No type errors
@@ -95,21 +95,7 @@ npx tsx examples/fibonacci.ts
 npx tsx examples/chaining.ts
 ```
 
-### 1.6 Run Benchmarks
-
-```bash
-npm run bench:transformations
-npm run bench:terminals
-npm run bench:statistics
-npm run bench:windowing
-npm run bench:lazy
-npm run bench:memory
-npm run bench:production
-```
-
-**Expected:** All 7 benchmarks complete without errors
-
-### 1.7 Baseline Snapshot
+### 1.6 Baseline Snapshot
 
 Capture baseline metrics for reference:
 
@@ -179,7 +165,6 @@ Add new version entry at the top following [Keep a Changelog](https://keepachang
 
 ### Quality Metrics
 - X tests passing (Y active, Z skipped)
-- N benchmarks validated
 - M examples working
 - Coverage: XX%
 
@@ -314,7 +299,6 @@ Version 0.3.0 - [Release Theme]
 
 Quality Metrics:
 - ✅ X tests passing (Y active, Z skipped)
-- ✅ N benchmarks validated
 - ✅ M examples working
 - ✅ Coverage: XX%
 
@@ -340,7 +324,6 @@ Version 0.3.0 - Quality & Confidence Release
 
 Quality Metrics:
 - ✅ 980 tests passing (979 active, 1 skipped)
-- ✅ 7 benchmark suites validated
 - ✅ 4 working examples with documentation
 - ✅ Coverage reporting fully functional
 
@@ -392,7 +375,6 @@ git tag -a v0.3.0 -m "Release v0.3.0 - Quality & Confidence
 ✅ Testing:
 - Re-enabled full async test suite (70 tests)
 - All 980 tests passing
-- 7 benchmark suites validated
 
 📚 Documentation:
 - Added 4 comprehensive examples
@@ -544,7 +526,6 @@ node -e "const {iter} = require('iterflow'); console.log(iter([1,2,3,4,5]).mean(
 
 ## Quality Metrics
 - ✅ X tests passing (Y active, Z skipped)
-- ✅ N benchmarks validated
 - ✅ M examples working
 
 ## Installation
