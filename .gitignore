@@ -90,20 +90,28 @@ pids/
 tmp/
 temp/
 
-# TypeDoc generated documentation
-docs/api-generated/
-
+# Not ready for v0.3.0
 benchmarks/
+scripts/*
+!scripts/release.js
+website/
 docs/
-examples/
 packages/
-scripts/
 templates/
 test-d/
-tests/
+
+# Broken examples (to be fixed in future release)
+examples/*-streaming.ts
+examples/*-pipeline.ts
+examples/*-processing.ts
+examples/*-analysis.ts
+examples/*-workflow.ts
+examples/*-filtering.ts
+examples/*-streams.ts
+
+# Future documentation
 CODE_OF_CONDUCT.md
-CONTRIBUTING.md
-package-lock.json
 SECURITY.md
 typedoc.json
-vitest.config.ts
+.mcp.json
+package-lock.json
