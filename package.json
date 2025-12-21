@@ -1,6 +1,6 @@
 {
   "name": "iterflow",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Powerful iterator utilities for ES2022+ with statistical operations, windowing, and lazy evaluation. Forward compatible with ES2025 iterator helpers.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run --exclude \"**/async.test.ts\"",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:types": "tsd",
@@ -47,7 +47,9 @@
     "changelog": "node scripts/generate-changelog.js",
     "release": "node scripts/release.js",
     "validate-commits": "node scripts/validate-commits.js",
-    "prepublishOnly": "npm run build && npm test && npm run test:types"
+    "prepublishOnly": "npm run build && npm test && npm run test:types",
+    "website:dev": "cd website && npm run dev",
+    "website:build": "npm run build && cd website && npm run build && cd .. && npm run docs"
   },
   "keywords": [
     "iterator",

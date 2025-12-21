@@ -2259,22 +2259,20 @@ export namespace asyncIter {
   export function fromPromises<T>(promises: Promise<T>[]): Asynciterflow<T> {
     return new Asynciterflow({
       async *[Symbol.asyncIterator]() {
-        const pending = new Set(promises);
         const results: Map<number, T> = new Map();
         const indexed = promises.map((p, i) => p.then((v) => ({ i, v })));
 
-        while (pending.size > 0) {
-          const result = await Promise.race(indexed);
-          results.set(result.i, result.v);
-          pending.delete(promises[result.i]!);
+        // Wait for all promises and store results
+        await Promise.all(
+          indexed.map(async (p) => {
+            const result = await p;
+            results.set(result.i, result.v);
+          })
+        );
 
-          // Yield in order
-          let nextIndex = promises.length - pending.size - 1;
-          while (results.has(nextIndex)) {
-            yield results.get(nextIndex)!;
-            results.delete(nextIndex);
-            nextIndex++;
-          }
+        // Yield in original order
+        for (let i = 0; i < promises.length; i++) {
+          yield results.get(i)!;
         }
       },
     });
