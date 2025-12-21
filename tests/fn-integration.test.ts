@@ -39,388 +39,349 @@ describe('Functional API - Integration with Wrapper API', () => {
   });
 
   describe('Statistical operations comparison', () => {
-    it('should produce same sum result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperSum = iter(data).sum();
-      const functionalSum = fn.sum(data);
+    const operations = [
+      {
+        name: 'sum',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).sum(),
+        functional: (d: number[]) => fn.sum(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'mean',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).mean(),
+        functional: (d: number[]) => fn.mean(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'min',
+        data: [3, 1, 4, 1, 5],
+        wrapper: (d: number[]) => iter(d).min(),
+        functional: (d: number[]) => fn.min(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'max',
+        data: [3, 1, 4, 1, 5],
+        wrapper: (d: number[]) => iter(d).max(),
+        functional: (d: number[]) => fn.max(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'count',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).count(),
+        functional: (d: number[]) => fn.count(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'median',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).median(),
+        functional: (d: number[]) => fn.median(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'variance',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).variance(),
+        functional: (d: number[]) => fn.variance(d),
+        checkFn: (a: any, b: any) => expect(a).toBeCloseTo(b!),
+      },
+      {
+        name: 'stdDev',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).stdDev(),
+        functional: (d: number[]) => fn.stdDev(d),
+        checkFn: (a: any, b: any) => expect(a).toBeCloseTo(b!),
+      },
+      {
+        name: 'percentile',
+        data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        wrapper: (d: number[]) => iter(d).percentile(50),
+        functional: (d: number[]) => fn.percentile(d, 50),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'mode',
+        data: [1, 2, 2, 3, 3, 3],
+        wrapper: (d: number[]) => iter(d).mode(),
+        functional: (d: number[]) => fn.mode(d),
+        checkFn: (a: any, b: any) => expect(a).toEqual(b),
+      },
+      {
+        name: 'quartiles',
+        data: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        wrapper: (d: number[]) => iter(d).quartiles(),
+        functional: (d: number[]) => fn.quartiles(d),
+        checkFn: (a: any, b: any) => expect(a).toEqual(b),
+      },
+      {
+        name: 'span',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).span(),
+        functional: (d: number[]) => fn.span(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+      {
+        name: 'product',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: number[]) => iter(d).product(),
+        functional: (d: number[]) => fn.product(d),
+        checkFn: (a: any, b: any) => expect(a).toBe(b),
+      },
+    ];
 
-      expect(wrapperSum).toBe(functionalSum);
-    });
-
-    it('should produce same mean result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperMean = iter(data).mean();
-      const functionalMean = fn.mean(data);
-
-      expect(wrapperMean).toBe(functionalMean);
-    });
-
-    it('should produce same min result', () => {
-      const data = [3, 1, 4, 1, 5];
-      const wrapperMin = iter(data).min();
-      const functionalMin = fn.min(data);
-
-      expect(wrapperMin).toBe(functionalMin);
-    });
-
-    it('should produce same max result', () => {
-      const data = [3, 1, 4, 1, 5];
-      const wrapperMax = iter(data).max();
-      const functionalMax = fn.max(data);
-
-      expect(wrapperMax).toBe(functionalMax);
-    });
-
-    it('should produce same count result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperCount = iter(data).count();
-      const functionalCount = fn.count(data);
-
-      expect(wrapperCount).toBe(functionalCount);
-    });
-
-    it('should produce same median result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperMedian = iter(data).median();
-      const functionalMedian = fn.median(data);
-
-      expect(wrapperMedian).toBe(functionalMedian);
-    });
-
-    it('should produce same variance result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperVariance = iter(data).variance();
-      const functionalVariance = fn.variance(data);
-
-      expect(wrapperVariance).toBeCloseTo(functionalVariance!);
-    });
-
-    it('should produce same stdDev result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperStdDev = iter(data).stdDev();
-      const functionalStdDev = fn.stdDev(data);
-
-      expect(wrapperStdDev).toBeCloseTo(functionalStdDev!);
-    });
-
-    it('should produce same percentile result', () => {
-      const data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const wrapperPercentile = iter(data).percentile(50);
-      const functionalPercentile = fn.percentile(data, 50);
-
-      expect(wrapperPercentile).toBe(functionalPercentile);
-    });
-
-    it('should produce same mode result', () => {
-      const data = [1, 2, 2, 3, 3, 3];
-      const wrapperMode = iter(data).mode();
-      const functionalMode = fn.mode(data);
-
-      expect(wrapperMode).toEqual(functionalMode);
-    });
-
-    it('should produce same quartiles result', () => {
-      const data = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      const wrapperQuartiles = iter(data).quartiles();
-      const functionalQuartiles = fn.quartiles(data);
-
-      expect(wrapperQuartiles).toEqual(functionalQuartiles);
-    });
-
-    it('should produce same span result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperSpan = iter(data).span();
-      const functionalSpan = fn.span(data);
-
-      expect(wrapperSpan).toBe(functionalSpan);
-    });
-
-    it('should produce same product result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const wrapperProduct = iter(data).product();
-      const functionalProduct = fn.product(data);
-
-      expect(wrapperProduct).toBe(functionalProduct);
+    operations.forEach(({ name, data, wrapper, functional, checkFn }) => {
+      it(`should produce same ${name} result`, () => {
+        const wrapperResult = wrapper(data);
+        const functionalResult = functional(data);
+        checkFn(wrapperResult, functionalResult);
+      });
     });
   });
 
   describe('Transformation operations comparison', () => {
-    it('should produce same map result', () => {
-      const data = [1, 2, 3];
-      const mapper = (x: number) => x * 2;
+    const transformations = [
+      {
+        name: 'map',
+        data: [1, 2, 3],
+        wrapper: (d: any[]) => iter(d).map((x: number) => x * 2).toArray(),
+        functional: (d: any[]) => Array.from(fn.map((x: number) => x * 2)(d)),
+      },
+      {
+        name: 'filter',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).filter((x: number) => x % 2 === 0).toArray(),
+        functional: (d: any[]) => Array.from(fn.filter((x: number) => x % 2 === 0)(d)),
+      },
+      {
+        name: 'take',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).take(3).toArray(),
+        functional: (d: any[]) => Array.from(fn.take(3)(d)),
+      },
+      {
+        name: 'drop',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).drop(2).toArray(),
+        functional: (d: any[]) => Array.from(fn.drop(2)(d)),
+      },
+      {
+        name: 'flatMap',
+        data: [1, 2, 3],
+        wrapper: (d: any[]) => iter(d).flatMap((x: number) => [x, x * 2]).toArray(),
+        functional: (d: any[]) => Array.from(fn.flatMap((x: number) => [x, x * 2])(d)),
+      },
+      {
+        name: 'reverse',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).reverse().toArray(),
+        functional: (d: any[]) => Array.from(fn.reverse()(d)),
+      },
+      {
+        name: 'distinct',
+        data: [1, 2, 2, 3, 1, 4],
+        wrapper: (d: any[]) => iter(d).distinct().toArray(),
+        functional: (d: any[]) => Array.from(fn.distinct(d)),
+      },
+      {
+        name: 'distinctBy',
+        data: [{id: 1, name: 'Alice'}, {id: 2, name: 'Bob'}, {id: 1, name: 'Charlie'}],
+        wrapper: (d: any[]) => iter(d).distinctBy((x) => x.id).toArray(),
+        functional: (d: any[]) => Array.from(fn.distinctBy((x: any) => x.id)(d)),
+      },
+    ];
 
-      const wrapperResult = iter(data).map(mapper).toArray();
-      const functionalResult = Array.from(fn.map(mapper)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same filter result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const predicate = (x: number) => x % 2 === 0;
-
-      const wrapperResult = iter(data).filter(predicate).toArray();
-      const functionalResult = Array.from(fn.filter(predicate)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same take result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).take(3).toArray();
-      const functionalResult = Array.from(fn.take(3)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same drop result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).drop(2).toArray();
-      const functionalResult = Array.from(fn.drop(2)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same flatMap result', () => {
-      const data = [1, 2, 3];
-      const mapper = (x: number) => [x, x * 2];
-
-      const wrapperResult = iter(data).flatMap(mapper).toArray();
-      const functionalResult = Array.from(fn.flatMap(mapper)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same reverse result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).reverse().toArray();
-      const functionalResult = Array.from(fn.reverse()(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same distinct result', () => {
-      const data = [1, 2, 2, 3, 1, 4];
-
-      const wrapperResult = iter(data).distinct().toArray();
-      const functionalResult = Array.from(fn.distinct(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same distinctBy result', () => {
-      const data = [{id: 1, name: 'Alice'}, {id: 2, name: 'Bob'}, {id: 1, name: 'Charlie'}];
-      const keyFn = (x: typeof data[0]) => x.id;
-
-      const wrapperResult = iter(data).distinctBy(keyFn).toArray();
-      const functionalResult = Array.from(fn.distinctBy(keyFn)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
+    transformations.forEach(({ name, data, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        const wrapperResult = wrapper(data);
+        const functionalResult = functional(data);
+        expect(wrapperResult).toEqual(functionalResult);
+      });
     });
   });
 
   describe('Windowing operations comparison', () => {
-    it('should produce same window result', () => {
-      const data = [1, 2, 3, 4, 5];
+    const windowingOps = [
+      {
+        name: 'window',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).window(3).toArray(),
+        functional: (d: any[]) => Array.from(fn.window(3)(d)),
+      },
+      {
+        name: 'chunk',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).chunk(2).toArray(),
+        functional: (d: any[]) => Array.from(fn.chunk(2)(d)),
+      },
+      {
+        name: 'pairwise',
+        data: [1, 2, 3, 4],
+        wrapper: (d: any[]) => iter(d).pairwise().toArray(),
+        functional: (d: any[]) => Array.from(fn.pairwise(d)),
+      },
+    ];
 
-      const wrapperResult = iter(data).window(3).toArray();
-      const functionalResult = Array.from(fn.window(3)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same chunk result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).chunk(2).toArray();
-      const functionalResult = Array.from(fn.chunk(2)(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same pairwise result', () => {
-      const data = [1, 2, 3, 4];
-
-      const wrapperResult = iter(data).pairwise().toArray();
-      const functionalResult = Array.from(fn.pairwise(data));
-
-      expect(wrapperResult).toEqual(functionalResult);
+    windowingOps.forEach(({ name, data, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        expect(wrapper(data)).toEqual(functional(data));
+      });
     });
   });
 
   describe('Terminal operations comparison', () => {
-    it('should produce same reduce result', () => {
-      const data = [1, 2, 3, 4];
-      const reducer = (acc: number, x: number) => acc + x;
+    const terminalOps = [
+      {
+        name: 'reduce',
+        data: [1, 2, 3, 4],
+        wrapper: (d: any[]) => iter(d).reduce((a: number, x: number) => a + x, 0),
+        functional: (d: any[]) => fn.reduce((a: number, x: number) => a + x, 0)(d),
+      },
+      {
+        name: 'find',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).find((x: number) => x > 3),
+        functional: (d: any[]) => fn.find((x: number) => x > 3)(d),
+      },
+      {
+        name: 'findIndex',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).findIndex((x: number) => x > 3),
+        functional: (d: any[]) => fn.findIndex((x: number) => x > 3)(d),
+      },
+      {
+        name: 'some',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).some((x: number) => x > 3),
+        functional: (d: any[]) => fn.some((x: number) => x > 3)(d),
+      },
+      {
+        name: 'every',
+        data: [2, 4, 6],
+        wrapper: (d: any[]) => iter(d).every((x: number) => x % 2 === 0),
+        functional: (d: any[]) => fn.every((x: number) => x % 2 === 0)(d),
+      },
+      {
+        name: 'first',
+        data: [1, 2, 3],
+        wrapper: (d: any[]) => iter(d).first(),
+        functional: (d: any[]) => fn.first(d),
+      },
+      {
+        name: 'last',
+        data: [1, 2, 3],
+        wrapper: (d: any[]) => iter(d).last(),
+        functional: (d: any[]) => fn.last(d),
+      },
+      {
+        name: 'nth',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).nth(2),
+        functional: (d: any[]) => fn.nth(2)(d),
+      },
+      {
+        name: 'isEmpty',
+        data: [],
+        wrapper: (d: any[]) => iter(d).isEmpty(),
+        functional: (d: any[]) => fn.isEmpty(d),
+      },
+      {
+        name: 'includes',
+        data: [1, 2, 3, 4, 5],
+        wrapper: (d: any[]) => iter(d).includes(3),
+        functional: (d: any[]) => fn.includes(3)(d),
+      },
+    ];
 
-      const wrapperResult = iter(data).reduce(reducer, 0);
-      const functionalResult = fn.reduce(reducer, 0)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same find result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const predicate = (x: number) => x > 3;
-
-      const wrapperResult = iter(data).find(predicate);
-      const functionalResult = fn.find(predicate)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same findIndex result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const predicate = (x: number) => x > 3;
-
-      const wrapperResult = iter(data).findIndex(predicate);
-      const functionalResult = fn.findIndex(predicate)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same some result', () => {
-      const data = [1, 2, 3, 4, 5];
-      const predicate = (x: number) => x > 3;
-
-      const wrapperResult = iter(data).some(predicate);
-      const functionalResult = fn.some(predicate)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same every result', () => {
-      const data = [2, 4, 6];
-      const predicate = (x: number) => x % 2 === 0;
-
-      const wrapperResult = iter(data).every(predicate);
-      const functionalResult = fn.every(predicate)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same first result', () => {
-      const data = [1, 2, 3];
-
-      const wrapperResult = iter(data).first();
-      const functionalResult = fn.first(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same last result', () => {
-      const data = [1, 2, 3];
-
-      const wrapperResult = iter(data).last();
-      const functionalResult = fn.last(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same nth result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).nth(2);
-      const functionalResult = fn.nth(2)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same isEmpty result', () => {
-      const data: number[] = [];
-
-      const wrapperResult = iter(data).isEmpty();
-      const functionalResult = fn.isEmpty(data);
-
-      expect(wrapperResult).toBe(functionalResult);
-    });
-
-    it('should produce same includes result', () => {
-      const data = [1, 2, 3, 4, 5];
-
-      const wrapperResult = iter(data).includes(3);
-      const functionalResult = fn.includes(3)(data);
-
-      expect(wrapperResult).toBe(functionalResult);
+    terminalOps.forEach(({ name, data, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        expect(wrapper(data)).toBe(functional(data));
+      });
     });
   });
 
   describe('Combining operations comparison', () => {
-    it('should produce same zip result', () => {
-      const data1 = [1, 2, 3];
-      const data2 = ['a', 'b', 'c'];
+    const combiningOps = [
+      {
+        name: 'zip',
+        data1: [1, 2, 3],
+        data2: ['a', 'b', 'c'],
+        wrapper: (d1: any, d2: any) => iter.zip(d1, d2).toArray(),
+        functional: (d1: any, d2: any) => Array.from(fn.zip(d1, d2)),
+      },
+      {
+        name: 'zipWith',
+        data1: [1, 2, 3],
+        data2: [10, 20, 30],
+        wrapper: (d1: any, d2: any) => iter.zipWith(d1, d2, (a: number, b: number) => a + b).toArray(),
+        functional: (d1: any, d2: any) => Array.from(fn.zipWith(d1, d2, (a: number, b: number) => a + b)),
+      },
+    ];
 
-      const wrapperResult = iter.zip(data1, data2).toArray();
-      const functionalResult = Array.from(fn.zip(data1, data2));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same zipWith result', () => {
-      const data1 = [1, 2, 3];
-      const data2 = [10, 20, 30];
-      const combiner = (a: number, b: number) => a + b;
-
-      const wrapperResult = iter.zipWith(data1, data2, combiner).toArray();
-      const functionalResult = Array.from(fn.zipWith(data1, data2, combiner));
-
-      expect(wrapperResult).toEqual(functionalResult);
+    combiningOps.forEach(({ name, data1, data2, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        expect(wrapper(data1, data2)).toEqual(functional(data1, data2));
+      });
     });
   });
 
   describe('Generator operations comparison', () => {
-    it('should produce same range result', () => {
-      const wrapperResult = iter.range(5).toArray();
-      const functionalResult = Array.from(fn.range(5));
+    const generatorOps = [
+      {
+        name: 'range (stop)',
+        wrapper: () => iter.range(5).toArray(),
+        functional: () => Array.from(fn.range(5)),
+      },
+      {
+        name: 'range (start/stop)',
+        wrapper: () => iter.range(2, 7).toArray(),
+        functional: () => Array.from(fn.range(2, 7)),
+      },
+      {
+        name: 'range (start/stop/step)',
+        wrapper: () => iter.range(0, 10, 2).toArray(),
+        functional: () => Array.from(fn.range(0, 10, 2)),
+      },
+      {
+        name: 'repeat',
+        wrapper: () => iter.repeat('x', 3).toArray(),
+        functional: () => Array.from(fn.repeat('x', 3)),
+      },
+    ];
 
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same range with start/stop result', () => {
-      const wrapperResult = iter.range(2, 7).toArray();
-      const functionalResult = Array.from(fn.range(2, 7));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same range with step result', () => {
-      const wrapperResult = iter.range(0, 10, 2).toArray();
-      const functionalResult = Array.from(fn.range(0, 10, 2));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same repeat result', () => {
-      const wrapperResult = iter.repeat('x', 3).toArray();
-      const functionalResult = Array.from(fn.repeat('x', 3));
-
-      expect(wrapperResult).toEqual(functionalResult);
+    generatorOps.forEach(({ name, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        expect(wrapper()).toEqual(functional());
+      });
     });
   });
 
   describe('Interleaving operations comparison', () => {
-    it('should produce same interleave result', () => {
-      const wrapperResult = iter.interleave([1, 2, 3], [4, 5, 6]).toArray();
-      const functionalResult = Array.from(fn.interleave([1, 2, 3], [4, 5, 6]));
+    const interleavingOps = [
+      {
+        name: 'interleave',
+        wrapper: () => iter.interleave([1, 2, 3], [4, 5, 6]).toArray(),
+        functional: () => Array.from(fn.interleave([1, 2, 3], [4, 5, 6])),
+      },
+      {
+        name: 'merge',
+        wrapper: () => iter.merge([1, 3, 5], [2, 4, 6]).toArray(),
+        functional: () => Array.from(fn.merge([1, 3, 5], [2, 4, 6])),
+      },
+      {
+        name: 'chain',
+        wrapper: () => iter.chain([1, 2], [3, 4], [5, 6]).toArray(),
+        functional: () => Array.from(fn.chain([1, 2], [3, 4], [5, 6])),
+      },
+    ];
 
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same merge result', () => {
-      const wrapperResult = iter.merge([1, 3, 5], [2, 4, 6]).toArray();
-      const functionalResult = Array.from(fn.merge([1, 3, 5], [2, 4, 6]));
-
-      expect(wrapperResult).toEqual(functionalResult);
-    });
-
-    it('should produce same chain result', () => {
-      const wrapperResult = iter.chain([1, 2], [3, 4], [5, 6]).toArray();
-      const functionalResult = Array.from(fn.chain([1, 2], [3, 4], [5, 6]));
-
-      expect(wrapperResult).toEqual(functionalResult);
+    interleavingOps.forEach(({ name, wrapper, functional }) => {
+      it(`should produce same ${name} result`, () => {
+        expect(wrapper()).toEqual(functional());
+      });
     });
   });
 
