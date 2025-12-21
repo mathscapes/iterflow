@@ -92,7 +92,8 @@ temp/
 
 # Not ready for v0.3.0
 benchmarks/
-scripts/
+scripts/*
+!scripts/release.js
 website/
 docs/
 packages/
@@ -110,7 +111,6 @@ examples/*-streams.ts
 
 # Future documentation
 CODE_OF_CONDUCT.md
-CONTRIBUTING.md
 SECURITY.md
 typedoc.json
 .mcp.json
