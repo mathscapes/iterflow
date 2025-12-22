@@ -35,6 +35,7 @@ At v1.0, we will decide if we need release branches for maintenance.
 ### Workflow
 
 1. Create a feature branch from `dev`:
+
    ```bash
    git checkout dev
    git pull origin dev
@@ -48,6 +49,7 @@ At v1.0, we will decide if we need release branches for maintenance.
    - Use conventional commit messages
 
 3. Push and create a PR to `dev`:
+
    ```bash
    git add .
    git commit -m "feat(scope): description"
@@ -69,6 +71,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -78,11 +81,13 @@ Types:
 - `chore`: Maintenance
 
 Scopes (optional):
+
 - `core`: Core iterator operations
 - `async`: Async iterator operations
 - `stats`: Statistical operations
 
 Examples:
+
 ```bash
 git commit -m "feat(core): add groupBy operation"
 git commit -m "fix(async): resolve race condition"
@@ -106,6 +111,7 @@ Maintain >90% test coverage for new code.
 ### Before Release
 
 1. Ensure `dev` is ready:
+
    ```bash
    git checkout dev
    git pull origin dev
@@ -121,6 +127,7 @@ Maintain >90% test coverage for new code.
 ### Release Steps
 
 1. **Merge dev to main**:
+
    ```bash
    git checkout main
    git pull origin main
@@ -128,24 +135,36 @@ Maintain >90% test coverage for new code.
    ```
 
 2. **Tag and bump version**:
+
    ```bash
    npm version minor
    # This updates package.json, creates a commit, and tags the release
    ```
 
 3. **Push tags**:
+
    ```bash
    git push origin main --tags
    ```
 
 4. **Publish to npm**:
+
    ```bash
    npm publish
    ```
 
 5. **Sync version back to dev**:
+
    ```bash
    git checkout dev
    git merge main --no-ff -m "chore: sync version from release"
    git push origin dev
    ```
+
+### Announce Release
+
+Share on X/Twitter:
+
+```
+Release iterflow [VERSION] - [HIGHLIGHTS]. https://npmjs.com/package/iterflow/v/[VERSION]
+```

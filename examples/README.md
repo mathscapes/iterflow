@@ -1,10 +1,10 @@
 # iterflow Examples
 
-Comprehensive examples demonstrating iterflow capabilities from basic operations to advanced workflows.
+Comprehensive examples demonstrating iterflow capabilities.
 
 ## Running Examples
 
-All basic examples can be run directly with Node.js 18+:
+All examples can be run directly with Node.js 18+:
 
 ```bash
 node examples/<filename>.ts
@@ -16,9 +16,7 @@ Or use tsx for TypeScript execution:
 npx tsx examples/<filename>.ts
 ```
 
-## Example Categories
-
-### Foundational Examples (4 examples)
+## Examples
 
 Perfect for getting started with iterflow:
 
@@ -27,47 +25,14 @@ Perfect for getting started with iterflow:
 - **fibonacci.ts** - Lazy evaluation with infinite generators
 - **chaining.ts** - Method chaining and composition patterns
 
-### Coming Soon
-
-The following examples are being refined and will be added in a future release:
-
-- **nodejs-streams.ts** - Integration with Node.js Streams API
-- **web-streams.ts** - Web Streams API integration
-- **csv-streaming.ts** - Stream processing of CSV data
-- **json-pipeline.ts** - Complex JSON transformation pipelines
-- **log-processing.ts** - Log file analysis and filtering
-- **time-series-analysis.ts** - Time series data analysis
-- **statistical-workflow.ts** - Complex statistical workflows
-- **realtime-filtering.ts** - Real-time stream filtering
-
-## Framework Integration Examples
-
-The following examples require peer dependencies and are included but not committed in v0.3.0:
-
-- **express-middleware.ts** (requires `express`) - Express.js middleware integration
-- **fastify-plugin.ts** (requires `fastify`) - Fastify plugin integration
-- **react-hooks.ts** (requires `react`) - React hooks integration
-- **vue-composables.ts** (requires `vue`) - Vue 3 composables integration
-- **rxjs-interop.ts** (requires `rxjs`) - RxJS interoperability
-
-To use framework examples, install the required peer dependency first:
-
-```bash
-npm install express  # for express-middleware.ts
-npm install fastify  # for fastify-plugin.ts
-npm install react    # for react-hooks.ts
-npm install vue      # for vue-composables.ts
-npm install rxjs     # for rxjs-interop.ts
-```
-
 ## Dependencies
 
-Basic examples use only:
+All examples use only:
 
 - Node.js 18+ built-in APIs
 - iterflow library
 
-**No external dependencies required for the 4 included examples.**
+**No external dependencies required.**
 
 ## Learning Path
 
