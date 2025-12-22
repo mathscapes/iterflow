@@ -224,6 +224,12 @@ const movingAverages = iter(temperatures)
 <!-- BENCHMARK_SUMMARY_START -->
 <!-- BENCHMARK_SUMMARY_END -->
 
+## Documentation
+
+- **[FAQ](FAQ.md)** - Frequently asked questions, common patterns, and troubleshooting
+- **[Examples](examples/)** - Real-world usage examples
+- **[SECURITY.md](SECURITY.md)** - Security best practices and vulnerability reporting
+
 ## Contributing
 
 We welcome contributions! Please see our [PLAYBOOK.md](PLAYBOOK.md) for:
@@ -234,6 +240,7 @@ We welcome contributions! Please see our [PLAYBOOK.md](PLAYBOOK.md) for:
 - Release process
 
 For quick start:
+
 1. Fork the repository
 2. Create a feature branch from `dev`
 3. Make your changes with tests
