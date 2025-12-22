@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-22
+
+### Added
+
+- FAQ.md with 45+ questions covering:
+  - Getting started and installation
+  - Core concepts (lazy evaluation, iterator consumption, memory management)
+  - Common operations and patterns (moving averages, deduplication, windowing)
+  - Performance and memory optimization
+  - Error handling and debugging
+  - Async operations
+  - TypeScript type inference and troubleshooting
+  - Advanced topics (functional composition, custom operations)
+  - Troubleshooting common issues
+  - Migration from Array methods and integration with other libraries
+- Documentation section in README.md linking to FAQ, examples, and security docs
+
+### Changed
+
+- Optimized test suite by removing 318 redundant tests (32% reduction)
+- Removed duplicate test files: statistics.test.ts, transformation.test.ts, terminal.test.ts, basic.test.ts, fn-edge-cases.test.ts
+- Refactored fn-integration.test.ts to use parameterized tests for better maintainability
+- Test count reduced from 981 to 663 while maintaining 100% coverage (77.28% statements, 86.32% branches, 83.52% functions)
+
+### Improved
+
+- Faster test suite execution due to fewer redundant tests
+- Cleaner test organization with focused, non-redundant coverage
+- Better documentation for new users with comprehensive FAQ
+
+[0.4.0]: https://github.com/mathscapes/iterflow/releases/tag/v0.4.0
+
 ## [0.3.2] - 2025-12-21
 
 ### Added
