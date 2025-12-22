@@ -41,7 +41,21 @@
     "validate-commits": "node scripts/validate-commits.js",
     "prepublishOnly": "npm run build && npm test && npm run test:types",
     "website:dev": "cd website && npm run dev",
-    "website:build": "npm run build && cd website && npm run build && cd .. && npm run docs"
+    "website:build": "npm run build && cd website && npm run build && cd .. && npm run docs",
+    "bench:transformations": "vitest bench --run benchmarks/transformations.bench.ts",
+    "bench:statistics": "vitest bench --run benchmarks/statistics.bench.ts",
+    "bench:windowing": "vitest bench --run benchmarks/windowing.bench.ts",
+    "bench:terminals": "vitest bench --run benchmarks/terminals.bench.ts",
+    "bench:lazy-evaluation": "vitest bench --run benchmarks/lazy-evaluation.bench.ts",
+    "bench:memory-profiling": "vitest bench --run benchmarks/memory-profiling.bench.ts",
+    "bench:production-profiling": "vitest bench --run benchmarks/production-profiling.bench.ts",
+    "bench:quick": "VITEST_BENCH_TIME=1000 node scripts/run-benchmarks.cjs",
+    "bench:all": "node scripts/run-benchmarks.cjs",
+    "bench:report": "node scripts/generate-benchmark-report.cjs",
+    "bench:update-readme": "node scripts/update-readme-benchmarks.cjs",
+    "bench:update-changelog": "node scripts/update-changelog-benchmarks.cjs",
+    "bench:full": "npm run bench:all && npm run bench:report && npm run bench:update-readme",
+    "bench:workflow": "bash scripts/run-benchmarks-full.sh"
   },
   "keywords": [
     "iterator",
