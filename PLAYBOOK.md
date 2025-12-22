@@ -6,18 +6,18 @@ Development and release guidelines for iterflow.
 
 ## Branching Strategy
 
-We use a simple main+dev branching model until v1.0:
+We use a simple main+develop branching model until v1.0:
 
 ### Branches
 
 - **main**: Stable releases only (tagged: v0.3.2, v0.4.0, etc.)
-- **dev**: Active development (default branch for PRs)
-- **feature/\***: Feature branches (created from dev, PR to dev)
-- **fix/\***: Bug fix branches (created from dev, PR to dev)
+- **develop**: Active development (default branch for PRs)
+- **feature/\***: Feature branches (created from develop, PR to develop)
+- **fix/\***: Bug fix branches (created from develop, PR to develop)
 
 ### No Release Branches Until 1.0
 
-All development happens on `dev`. When releasing, merge `dev` to `main`.
+All development happens on `develop`. When releasing, merge `develop` to `main`.
 
 At v1.0, we will decide if we need release branches for maintenance.
 
@@ -34,11 +34,11 @@ At v1.0, we will decide if we need release branches for maintenance.
 
 ### Workflow
 
-1. Create a feature branch from `dev`:
+1. Create a feature branch from `develop`:
 
    ```bash
-   git checkout dev
-   git pull origin dev
+   git checkout develop
+   git pull origin develop
    git checkout -b feature/your-feature-name
    ```
 
@@ -48,7 +48,7 @@ At v1.0, we will decide if we need release branches for maintenance.
    - Update JSDoc comments
    - Use conventional commit messages
 
-3. Push and create a PR to `dev`:
+3. Push and create a PR to `develop`:
 
    ```bash
    git add .
@@ -56,7 +56,7 @@ At v1.0, we will decide if we need release branches for maintenance.
    git push origin feature/your-feature-name
    ```
 
-4. Create PR on GitHub (target: `dev`)
+4. Create PR on GitHub (target: `develop`)
 
 5. Address review feedback
 
@@ -110,11 +110,11 @@ Maintain >90% test coverage for new code.
 
 ### Before Release
 
-1. Ensure `dev` is ready:
+1. Ensure `develop` is ready:
 
    ```bash
-   git checkout dev
-   git pull origin dev
+   git checkout develop
+   git pull origin develop
    npm test
    npm run build
    ```
@@ -126,12 +126,12 @@ Maintain >90% test coverage for new code.
 
 ### Release Steps
 
-1. **Merge dev to main**:
+1. **Merge develop to main**:
 
    ```bash
    git checkout main
    git pull origin main
-   git merge dev --no-ff -m "chore: release v0.4.0"
+   git merge develop --no-ff -m "chore: release v0.4.0"
    ```
 
 2. **Tag and bump version**:
@@ -153,12 +153,12 @@ Maintain >90% test coverage for new code.
    npm publish
    ```
 
-5. **Sync version back to dev**:
+5. **Sync version back to develop**:
 
    ```bash
-   git checkout dev
+   git checkout develop
    git merge main --no-ff -m "chore: sync version from release"
-   git push origin dev
+   git push origin develop
    ```
 
 ### Announce Release

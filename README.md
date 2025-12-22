@@ -298,9 +298,9 @@ We welcome contributions! Please see our [PLAYBOOK.md](PLAYBOOK.md) for:
 For quick start:
 
 1. Fork the repository
-2. Create a feature branch from `dev`
+2. Create a feature branch from `develop`
 3. Make your changes with tests
-4. Submit a PR to `dev`
+4. Submit a PR to `develop`
 
 See [PLAYBOOK.md](PLAYBOOK.md) for complete details.
 
