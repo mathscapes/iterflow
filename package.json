@@ -1,6 +1,6 @@
 {
   "name": "iterflow",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Powerful iterator utilities for ES2022+ with statistical operations, windowing, and lazy evaluation. Forward compatible with ES2025 iterator helpers.",
   "type": "module",
   "main": "./dist/index.cjs",
