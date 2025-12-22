@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-12-22
+
+### Added
+
+- Benchmarking workflow enhancements:
+  - New `bench:quick` script for rapid benchmarking during development
+  - Detailed documentation in BENCHMARKING.md covering workflow examples, output files, and memory management
+  
 ## [0.4.0] - 2025-12-22
 
 ### Added

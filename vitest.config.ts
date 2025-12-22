@@ -33,6 +33,8 @@ export default defineConfig({
     benchmark: {
       include: ['benchmarks/**/*.bench.ts'],
       exclude: ['node_modules', 'dist'],
+      time: process.env.VITEST_BENCH_TIME ? parseInt(process.env.VITEST_BENCH_TIME) : 5000,
+      iterations: process.env.VITEST_BENCH_ITERATIONS ? parseInt(process.env.VITEST_BENCH_ITERATIONS) : undefined,
     }
   }
 });

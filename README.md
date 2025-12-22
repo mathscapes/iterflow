@@ -221,7 +221,63 @@ const movingAverages = iter(temperatures)
   .toArray();
 ```
 
+## When to Use iterflow
+
+iterflow balances developer experience with performance. Here's how to decide:
+
+### Use iterflow when:
+
+- **Large datasets** (1000+ items) - lazy evaluation avoids unnecessary work
+- **Early termination** - finding first match, taking limited results (find, some, every, take)
+- **Memory efficiency** - windowing, chunking, or processing huge files
+- **Complex pipelines** - chaining 3+ operations together
+- **Statistical operations** - mean, median, variance, percentile calculations
+- **Code readability** - method chaining feels more natural than manual loops
+
+### Consider alternatives when:
+
+- **Small arrays** (< 100 items) - native Array methods are slightly faster
+- **Single simple operation** - map or filter alone on small data
+- **Performance-critical hot paths** - called millions of times, every microsecond matters
+- **Need multiple iterations** - arrays are easier to loop over multiple times
+
+### The Trade-off
+
+iterflow uses lazy evaluation, which means:
+- **Lower memory usage** - no intermediate arrays created
+- **Slightly slower per operation** - small function call overhead
+- **Better for large datasets** - memory savings far exceed speed cost
+- **Better for partial consumption** - stops early when possible
+
+### Real Performance Impact
+
+For datasets < 100 items, the differences are negligible—use what feels natural.
+
+For datasets > 1000 items:
+- **With early termination** (take 10 from 100K): iterflow can be 20-300x faster
+- **With windowing** (moving average): iterflow can be 35-600x faster due to memory efficiency
+- **Full consumption** (process all items): native arrays are 2-5x faster
+
+See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data and specific operation comparisons.
+
 <!-- BENCHMARK_SUMMARY_START -->
+## Performance
+
+iterflow balances performance with developer experience. Here's how it performs across different operation categories:
+
+| Category | vs Native | vs Lodash | vs Ramda | Operations Tested |
+|----------|-----------|-----------|----------|-------------------|
+| Transformations | 10.8x slower | 6.9x slower | 8.9x slower | 13 |
+| Statistics | N/A | 1.8x slower | 1.4x slower | 14 |
+| Windowing | N/A | 6.1x slower | 8.7x slower | 13 |
+| Terminals | 5.8x slower | 2.6x slower | 5.1x slower | 13 |
+| Lazy Evaluation | 2.8x slower | N/A | 12.9x slower | 3 |
+| Memory Profiling | N/A | N/A | N/A | 0 |
+| Production Profiling | N/A | N/A | N/A | 0 |
+
+**Detailed benchmarks:** See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for comprehensive performance data.
+
+*Last updated: December 22, 2025 (v0.4.0)*
 <!-- BENCHMARK_SUMMARY_END -->
 
 ## Documentation
