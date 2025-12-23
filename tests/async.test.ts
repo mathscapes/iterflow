@@ -430,7 +430,7 @@ describe("Asynciterflow", () => {
       expect(result).toEqual([[1, 2], [3, 4], [5]]);
     });
 
-    it.skip("should throttle stream", async () => {
+    it("should throttle stream", async () => {
       const start = Date.now();
       const result = await asyncIter(asyncGen(1, 2, 3))
         .throttle(20)

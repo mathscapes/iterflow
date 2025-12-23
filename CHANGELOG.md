@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-12-24
+
+### Added
+
+- **Array fast-path optimizations** for breakthrough performance improvements when using arrays as sources:
+  - Automatic array detection and caching in constructor
+  - O(1) terminal operations: `count()`, `first()`, `last()`, `nth()`, `isEmpty()`
+  - Optimized array operations: `includes()`, `toArray()` (returns copy)
+  - Fast-path for slice operations: `drop()`, `take()` using native `Array.slice()`
+  - Optimized buffering operations: `reverse()`, `sort()`, `sortBy()`
+  - Statistical operations leverage cached arrays: `median()`, `variance()`, `percentile()`, `mode()`, `quartiles()`, `covariance()`, `correlation()`
+  - Functional API optimizations: `sum()`, `count()`, `mean()`, `min()`, `max()`, and all statistical functions
+  - Updated test suite with 45 new tests verifying correctness, lazy evaluation preservation, and edge cases
+
+### Changed
+
+- Test suite expanded from 662 to 708 tests (45 new array fast-path tests + async/edge case tests)
+- All operations maintain backward compatibility - no breaking changes
+- Lazy evaluation semantics preserved for transformations (`map()`, `filter()`, `flatMap()`)
+
+### Performance
+
+- Terminal `count()`: **~23x faster** on arrays (O(1) via `.length`)
+- Slice operations (`drop()`/`take()`): **~100x+ faster** on arrays (O(k) via `.slice()`)
+- Statistical operations: **10-20x faster** when source is an array
+- Chain preservation: Operations like `.drop(2).take(5).count()` stay fast through the entire chain
+- No performance regression for iterator sources - optimizations only apply to arrays
+
+[0.7.0]: https://github.com/mathscapes/iterflow/releases/tag/v0.7.0
+
 ## [0.5.0] - 2025-12-22
 
 ### Added

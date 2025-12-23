@@ -260,30 +260,13 @@ For datasets > 1000 items:
 
 See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data and specific operation comparisons.
 
-<!-- BENCHMARK_SUMMARY_START -->
-## Performance
-
-iterflow balances performance with developer experience. Here's how it performs across different operation categories:
-
-| Category | vs Native | vs Lodash | vs Ramda | Operations Tested |
-|----------|-----------|-----------|----------|-------------------|
-| Transformations | 10.8x slower | 6.9x slower | 8.9x slower | 13 |
-| Statistics | N/A | 1.8x slower | 1.4x slower | 14 |
-| Windowing | N/A | 6.1x slower | 8.7x slower | 13 |
-| Terminals | 5.8x slower | 2.6x slower | 5.1x slower | 13 |
-| Lazy Evaluation | 2.8x slower | N/A | 12.9x slower | 3 |
-| Memory Profiling | N/A | N/A | N/A | 0 |
-| Production Profiling | N/A | N/A | N/A | 0 |
-
-**Detailed benchmarks:** See [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for comprehensive performance data.
-
-*Last updated: December 22, 2025 (v0.4.0)*
-<!-- BENCHMARK_SUMMARY_END -->
-
 ## Documentation
 
 - **[FAQ](FAQ.md)** - Frequently asked questions, common patterns, and troubleshooting
 - **[Examples](examples/)** - Real-world usage examples
+- **[Memory Safety Guide](docs/guides/memory-safety.md)** - Avoiding memory leaks and efficient memory usage
+- **[Performance Guide](docs/PERFORMANCE.md)** - Optimization techniques and benchmarking
+- **[Benchmarking Guide](docs/BENCHMARKING.md)** - Running and interpreting benchmarks
 - **[SECURITY.md](SECURITY.md)** - Security best practices and vulnerability reporting
 
 ## Contributing

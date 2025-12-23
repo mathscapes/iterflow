@@ -15,6 +15,7 @@ import { validateRange, validatePositiveInteger } from "./validation.js";
  */
 export class iterflow<T> implements Iterable<T> {
   private source: Iterator<T>;
+  private _sourceArray?: T[];
 
   /**
    * Creates a new iterflow instance from an iterable or iterator.
@@ -27,8 +28,14 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   constructor(source: Iterable<T> | Iterator<T>) {
-    this.source =
-      Symbol.iterator in source ? source[Symbol.iterator]() : source;
+    if (Array.isArray(source)) {
+      this._sourceArray = source;
+      this.source = source[Symbol.iterator]();
+    } else {
+      this._sourceArray = undefined;
+      this.source =
+        Symbol.iterator in source ? source[Symbol.iterator]() : source;
+    }
   }
 
   // Iterator protocol
@@ -109,6 +116,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   take(limit: number): iterflow<T> {
+    if (this._sourceArray) {
+      return new iterflow(this._sourceArray.slice(0, limit));
+    }
     const self = this;
     return new iterflow({
       *[Symbol.iterator]() {
@@ -133,6 +143,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   drop(count: number): iterflow<T> {
+    if (this._sourceArray) {
+      return new iterflow(this._sourceArray.slice(count));
+    }
     const self = this;
     return new iterflow({
       *[Symbol.iterator]() {
@@ -291,6 +304,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   reverse(): iterflow<T> {
+    if (this._sourceArray) {
+      return new iterflow(this._sourceArray.slice().reverse());
+    }
     const self = this;
     return new iterflow({
       *[Symbol.iterator]() {
@@ -319,6 +335,16 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   sort(this: iterflow<number | string>): iterflow<number | string> {
+    if (this._sourceArray) {
+      return new iterflow(
+        this._sourceArray.slice().sort((a, b) => {
+          if (typeof a === "number" && typeof b === "number") {
+            return a - b;
+          }
+          return String(a).localeCompare(String(b));
+        }),
+      );
+    }
     const self = this;
     return new iterflow({
       *[Symbol.iterator]() {
@@ -352,6 +378,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   sortBy(compareFn: (a: T, b: T) => number): iterflow<T> {
+    if (this._sourceArray) {
+      return new iterflow(this._sourceArray.slice().sort(compareFn));
+    }
     const self = this;
     return new iterflow({
       *[Symbol.iterator]() {
@@ -374,6 +403,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   toArray(): T[] {
+    if (this._sourceArray) {
+      return this._sourceArray.slice();
+    }
     return Array.from(this);
   }
 
@@ -388,6 +420,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   count(): number {
+    if (this._sourceArray) {
+      return this._sourceArray.length;
+    }
     let count = 0;
     for (const _ of this) {
       count++;
@@ -409,6 +444,13 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   sum(this: iterflow<number>): number {
+    if (this._sourceArray) {
+      let total = 0;
+      for (let i = 0; i < this._sourceArray.length; i++) {
+        total += this._sourceArray[i]!;
+      }
+      return total;
+    }
     let total = 0;
     for (const value of this) {
       total += value;
@@ -501,16 +543,16 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   median(this: iterflow<number>): number | undefined {
-    const values = this.toArray();
+    const values = this._sourceArray || this.toArray();
     if (values.length === 0) return undefined;
 
-    values.sort((a, b) => a - b);
-    const mid = Math.floor(values.length / 2);
+    const sorted = values.slice().sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
 
-    if (values.length % 2 === 0) {
-      return (values[mid - 1]! + values[mid]!) / 2;
+    if (sorted.length % 2 === 0) {
+      return (sorted[mid - 1]! + sorted[mid]!) / 2;
     } else {
-      return values[mid]!;
+      return sorted[mid]!;
     }
   }
 
@@ -529,7 +571,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   variance(this: iterflow<number>): number | undefined {
-    const values = this.toArray();
+    const values = this._sourceArray || this.toArray();
     if (values.length === 0) return undefined;
 
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -584,24 +626,24 @@ export class iterflow<T> implements Iterable<T> {
   percentile(this: iterflow<number>, p: number): number | undefined {
     validateRange(p, 0, 100, "percentile", "percentile");
 
-    const values = this.toArray();
+    const values = this._sourceArray || this.toArray();
     if (values.length === 0) return undefined;
 
-    values.sort((a, b) => a - b);
+    const sorted = values.slice().sort((a, b) => a - b);
 
-    if (p === 0) return values[0]!;
-    if (p === 100) return values[values.length - 1]!
+    if (p === 0) return sorted[0]!;
+    if (p === 100) return sorted[sorted.length - 1]!
 
-    const index = (p / 100) * (values.length - 1);
+    const index = (p / 100) * (sorted.length - 1);
     const lower = Math.floor(index);
     const upper = Math.ceil(index);
 
     if (lower === upper) {
-      return values[lower]!;
+      return sorted[lower]!;
     }
 
     const weight = index - lower;
-    return values[lower]! * (1 - weight) + values[upper]! * weight;
+    return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
   }
 
   /**
@@ -620,7 +662,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   mode(this: iterflow<number>): number[] | undefined {
-    const values = this.toArray();
+    const values = this._sourceArray || this.toArray();
     if (values.length === 0) return undefined;
 
     const frequency = new Map<number, number>();
@@ -660,25 +702,25 @@ export class iterflow<T> implements Iterable<T> {
   quartiles(
     this: iterflow<number>,
   ): { Q1: number; Q2: number; Q3: number } | undefined {
-    const values = this.toArray();
+    const values = this._sourceArray || this.toArray();
     if (values.length === 0) return undefined;
 
-    values.sort((a, b) => a - b);
+    const sorted = values.slice().sort((a, b) => a - b);
 
     const calculatePercentile = (p: number): number => {
-      if (p === 0) return values[0]!;
-      if (p === 100) return values[values.length - 1]!;
+      if (p === 0) return sorted[0]!;
+      if (p === 100) return sorted[sorted.length - 1]!;
 
-      const index = (p / 100) * (values.length - 1);
+      const index = (p / 100) * (sorted.length - 1);
       const lower = Math.floor(index);
       const upper = Math.ceil(index);
 
       if (lower === upper) {
-        return values[lower]!;
+        return sorted[lower]!;
       }
 
       const weight = index - lower;
-      return values[lower]! * (1 - weight) + values[upper]! * weight;
+      return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
     };
 
     return {
@@ -761,7 +803,7 @@ export class iterflow<T> implements Iterable<T> {
     this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
-    const values1 = this.toArray();
+    const values1 = this._sourceArray || this.toArray();
     const values2 = Array.from(other);
 
     if (
@@ -804,7 +846,7 @@ export class iterflow<T> implements Iterable<T> {
     this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
-    const values1 = this.toArray();
+    const values1 = this._sourceArray || this.toArray();
     const values2 = Array.from(other);
 
     if (
@@ -1273,6 +1315,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   first(defaultValue?: T): T | undefined {
+    if (this._sourceArray) {
+      return this._sourceArray.length > 0 ? this._sourceArray[0] : defaultValue;
+    }
     const result = this.source.next();
     return result.done ? defaultValue : result.value;
   }
@@ -1291,6 +1336,11 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   last(defaultValue?: T): T | undefined {
+    if (this._sourceArray) {
+      return this._sourceArray.length > 0
+        ? this._sourceArray[this._sourceArray.length - 1]
+        : defaultValue;
+    }
     let lastValue: T | undefined = defaultValue;
     let hasValue = false;
     for (const value of this) {
@@ -1314,6 +1364,11 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   nth(index: number): T | undefined {
+    if (this._sourceArray) {
+      return index >= 0 && index < this._sourceArray.length
+        ? this._sourceArray[index]
+        : undefined;
+    }
     if (index < 0) {
       return undefined;
     }
@@ -1339,6 +1394,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   isEmpty(): boolean {
+    if (this._sourceArray) {
+      return this._sourceArray.length === 0;
+    }
     const result = this.source.next();
     return result.done === true;
   }
@@ -1358,6 +1416,9 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   includes(searchValue: T): boolean {
+    if (this._sourceArray) {
+      return this._sourceArray.includes(searchValue);
+    }
     for (const value of this) {
       if (value === searchValue) {
         return true;

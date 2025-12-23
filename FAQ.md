@@ -356,7 +356,7 @@ const first = Array.from(iterator);
 
 // Second use: Empty!
 const second = Array.from(iterator);
-// []  �� Iterator is exhausted!
+// []   Iterator is exhausted!
 ```
 
 **Terminal operations consume iterators:**
@@ -1142,7 +1142,7 @@ iter(data)
   .map(x => x * 2)              // Lazy
   .filter(x => x > 5)           // Lazy
   .take(10)                     // Lazy
-  .sum();                        // �� THIS makes everything execute!
+  .sum();                       // THIS makes everything execute!
 ```
 
 **Memory-consuming operations (eager):**
@@ -1155,6 +1155,181 @@ iter(data).median();            // Eager: must load all to find median
 iter(data).variance();          // Eager: must load all to calculate
 iter(data).groupBy(...);        // Eager: must load all to group
 ```
+
+### How do I avoid memory leaks with infinite iterators?
+
+**Always use `.take()` or other limiting operators** with infinite iterators to prevent unbounded memory growth:
+
+```typescript
+// BAD: Will run forever and exhaust memory
+iter.range(Infinity).map(x => x * 2).toArray();
+
+// GOOD: Limit iterations before materializing
+iter.range(Infinity).take(1000).map(x => x * 2).toArray();
+
+// GOOD: Use in a limited loop
+for (const value of iter.range(Infinity).take(100)) {
+  console.log(value);
+}
+
+// All infinite generators need limiting:
+iter.range(Infinity).take(1000);
+iter.repeat(value).take(10);
+iter.cycle(iterable).take(20);
+```
+
+**Prevention checklist:**
+- Never call `.toArray()` on infinite iterators
+- Never use `.forEach()` on infinite iterators without `.take()`
+- Always validate iterator size before buffering operations (`.reverse()`, `.sort()`, etc.)
+- Use early termination with `.first()`, `.find()`, or `.some()` when possible
+
+See [Memory Safety Guide](docs/guides/memory-safety.md) for comprehensive guidance.
+
+### When should I use toArray()?
+
+Use `.toArray()` sparingly - only when you actually need the materialized array:
+
+```typescript
+// ANTI-PATTERNS: Unnecessary materialization
+
+// Don't use .toArray() for length - use .count() instead
+iter(data).map(x => x * 2).toArray().length;  // Bad
+iter(data).map(x => x * 2).count();            // Good
+
+// Don't materialize then slice - use .take() instead
+iter(data).filter(x => x > 0).toArray().slice(0, 10);  // Bad
+iter(data).filter(x => x > 0).take(10).toArray();      // Good
+
+// Don't use for first element - use .first()
+const first = iter(data).map(expensive).toArray()[0];  // Bad
+const first = iter(data).map(expensive).first();       // Good
+
+// GOOD PATTERNS: When you actually need an array
+
+// Need array for multiple passes
+const sorted = iter(data).sortBy(x => x.value).toArray();
+const top10 = sorted.slice(0, 10);
+const bottom10 = sorted.slice(-10);
+
+// Terminal operation after transformation
+const items = iter(products)
+  .filter(p => p.inStock)
+  .map(p => ({ id: p.id, name: p.name }))
+  .toArray();
+
+// External API requires an array
+const items = iter(products).take(20).toArray();
+renderList(items);  // Component expects Array<T>
+```
+
+**Rule of thumb**: If you can accomplish your goal with a terminal operation (`.count()`, `.first()`, `.sum()`, etc.), prefer that over `.toArray()`.
+
+**Prefer terminal operations:**
+```typescript
+// Instead of:           Use:
+.toArray().length    →  .count()
+.toArray()[0]        →  .first()
+.toArray().at(-1)    →  .last()
+.toArray()[n]        →  .nth(n)
+.toArray().includes  →  .includes()
+.toArray().some      →  .some()
+.toArray().every     →  .every()
+```
+
+### How can I profile memory usage?
+
+Use `process.memoryUsage()` to track heap usage before and after operations:
+
+```typescript
+// Basic memory measurement
+const before = process.memoryUsage().heapUsed;
+
+const result = iter(largeDataset)
+  .map(complexOperation)
+  .filter(x => x.valid)
+  .toArray();
+
+const after = process.memoryUsage().heapUsed;
+const usedMB = (after - before) / 1024 / 1024;
+
+console.log(`Memory used: ${usedMB.toFixed(2)} MB`);
+
+// More detailed measurement with helper function
+function measureMemory<T>(name: string, fn: () => T): T {
+  const before = process.memoryUsage();
+  const result = fn();
+  const after = process.memoryUsage();
+
+  const heapDelta = (after.heapUsed - before.heapUsed) / 1024 / 1024;
+  const externalDelta = (after.external - before.external) / 1024 / 1024;
+
+  console.log(`${name}:`);
+  console.log(`  Heap: ${heapDelta.toFixed(2)} MB`);
+  console.log(`  External: ${externalDelta.toFixed(2)} MB`);
+
+  return result;
+}
+
+// Usage
+const result = measureMemory('Process Dataset', () => {
+  return iter(data).map(transform).filter(validate).toArray();
+});
+```
+
+**For accurate measurements:**
+```typescript
+// Run with: node --expose-gc script.js
+if (global.gc) global.gc();  // Force GC before
+
+const before = process.memoryUsage().heapUsed;
+// ... operations
+if (global.gc) global.gc();  // Force GC after
+
+const after = process.memoryUsage().heapUsed;
+```
+
+**Memory leak detection:**
+```typescript
+// Run operation multiple times
+if (global.gc) global.gc();
+const baseline = process.memoryUsage().heapUsed;
+
+for (let i = 0; i < 10; i++) {
+  iter(data).map(x => x * 2).toArray();
+  if (global.gc) global.gc();
+}
+
+const final = process.memoryUsage().heapUsed;
+const leak = (final - baseline) / 1024 / 1024;
+
+if (leak > 10) {
+  console.warn(`Possible leak: ${leak.toFixed(2)} MB increase`);
+}
+```
+
+**Production monitoring:**
+```typescript
+async function processWithMonitoring(data: Iterable<T>) {
+  const memBefore = process.memoryUsage().heapUsed;
+
+  try {
+    return await asyncIter(data)
+      .filter(validate)
+      .map(transform)
+      .toArray();
+  } finally {
+    const memAfter = process.memoryUsage().heapUsed;
+    const memUsedMB = (memAfter - memBefore) / 1024 / 1024;
+
+    if (memUsedMB > 500) {  // 500MB threshold
+      logger.warn('High memory usage', { memoryMB: memUsedMB });
+    }
+  }
+}
+```
+
+See [Memory Safety Guide](docs/guides/memory-safety.md) for comprehensive profiling techniques.
 
 ---
 
@@ -1659,7 +1834,7 @@ const iterator = iter([1, 2, 3]);
 
 //  Error: Iterator consumed
 const first = iterator.toArray();   // Consumes
-const second = iterator.toArray();  // �� Error! Iterator exhausted
+const second = iterator.toArray();  //  Error! Iterator exhausted
 
 //  Solution 1: Create fresh iterators
 const first = iter([1, 2, 3]).toArray();
@@ -1730,13 +1905,13 @@ const numbers = iter(data)
 **Common conversions:**
 
 ```typescript
-// Array methods �� iterflow (wrapper)
-data.map(x => x * 2)        �� iter(data).map(x => x * 2).toArray()
-data.filter(x => x > 0)     �� iter(data).filter(x => x > 0).toArray()
-data.slice(0, 5)            �� iter(data).take(5).toArray()
-data.slice(5)               �� iter(data).drop(5).toArray()
-data.reduce((a, b) => a + b) �� iter(data).sum()  // or reduce()
-data.find(x => x > 5)       �� iter(data).find(x => x > 5)
+// Array methods  iterflow (wrapper)
+data.map(x => x * 2)         iter(data).map(x => x * 2).toArray()
+data.filter(x => x > 0)      iter(data).filter(x => x > 0).toArray()
+data.slice(0, 5)             iter(data).take(5).toArray()
+data.slice(5)                iter(data).drop(5).toArray()
+data.reduce((a, b) => a + b)  iter(data).sum()  // or reduce()
+data.find(x => x > 5)        iter(data).find(x => x > 5)
 ```
 
 **Incremental migration:**

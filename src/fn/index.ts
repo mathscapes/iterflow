@@ -19,6 +19,13 @@ import {
  * ```
  */
 export function sum(iterable: Iterable<number>): number {
+  if (Array.isArray(iterable)) {
+    let total = 0;
+    for (let i = 0; i < iterable.length; i++) {
+      total += iterable[i]!;
+    }
+    return total;
+  }
   let total = 0;
   for (const value of iterable) {
     total += value;
@@ -38,6 +45,14 @@ export function sum(iterable: Iterable<number>): number {
  * ```
  */
 export function mean(iterable: Iterable<number>): number | undefined {
+  if (Array.isArray(iterable)) {
+    if (iterable.length === 0) return undefined;
+    let total = 0;
+    for (let i = 0; i < iterable.length; i++) {
+      total += iterable[i]!;
+    }
+    return total / iterable.length;
+  }
   let total = 0;
   let count = 0;
   for (const value of iterable) {
@@ -59,6 +74,10 @@ export function mean(iterable: Iterable<number>): number | undefined {
  * ```
  */
 export function min(iterable: Iterable<number>): number | undefined {
+  if (Array.isArray(iterable)) {
+    if (iterable.length === 0) return undefined;
+    return Math.min(...iterable);
+  }
   let minimum: number | undefined = undefined;
   for (const value of iterable) {
     if (minimum === undefined || value < minimum) {
@@ -80,6 +99,10 @@ export function min(iterable: Iterable<number>): number | undefined {
  * ```
  */
 export function max(iterable: Iterable<number>): number | undefined {
+  if (Array.isArray(iterable)) {
+    if (iterable.length === 0) return undefined;
+    return Math.max(...iterable);
+  }
   let maximum: number | undefined = undefined;
   for (const value of iterable) {
     if (maximum === undefined || value > maximum) {
@@ -102,6 +125,9 @@ export function max(iterable: Iterable<number>): number | undefined {
  * ```
  */
 export function count<T>(iterable: Iterable<T>): number {
+  if (Array.isArray(iterable)) {
+    return iterable.length;
+  }
   let count = 0;
   for (const _ of iterable) {
     count++;
@@ -123,16 +149,16 @@ export function count<T>(iterable: Iterable<T>): number {
  * ```
  */
 export function median(iterable: Iterable<number>): number | undefined {
-  const values = Array.from(iterable);
+  const values = Array.isArray(iterable) ? iterable : Array.from(iterable);
   if (values.length === 0) return undefined;
 
-  values.sort((a, b) => a - b);
-  const mid = Math.floor(values.length / 2);
+  const sorted = values.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
 
-  if (values.length % 2 === 0) {
-    return (values[mid - 1]! + values[mid]!) / 2;
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1]! + sorted[mid]!) / 2;
   } else {
-    return values[mid]!;
+    return sorted[mid]!;
   }
 }
 
@@ -149,7 +175,7 @@ export function median(iterable: Iterable<number>): number | undefined {
  * ```
  */
 export function variance(iterable: Iterable<number>): number | undefined {
-  const values = Array.from(iterable);
+  const values = Array.isArray(iterable) ? iterable : Array.from(iterable);
   if (values.length === 0) return undefined;
 
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -202,24 +228,24 @@ export function percentile(
 ): number | undefined {
   validateRange(p, 0, 100, "percentile", "percentile");
 
-  const values = Array.from(iterable);
+  const values = Array.isArray(iterable) ? iterable : Array.from(iterable);
   if (values.length === 0) return undefined;
 
-  values.sort((a, b) => a - b);
+  const sorted = values.slice().sort((a, b) => a - b);
 
-  if (p === 0) return values[0];
-  if (p === 100) return values[values.length - 1];
+  if (p === 0) return sorted[0];
+  if (p === 100) return sorted[sorted.length - 1];
 
-  const index = (p / 100) * (values.length - 1);
+  const index = (p / 100) * (sorted.length - 1);
   const lower = Math.floor(index);
   const upper = Math.ceil(index);
 
   if (lower === upper) {
-    return values[lower]!;
+    return sorted[lower]!;
   }
 
   const weight = index - lower;
-  return values[lower]! * (1 - weight) + values[upper]! * weight;
+  return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
 }
 
 /**
@@ -236,7 +262,7 @@ export function percentile(
  * ```
  */
 export function mode(iterable: Iterable<number>): number[] | undefined {
-  const values = Array.from(iterable);
+  const values = Array.isArray(iterable) ? iterable : Array.from(iterable);
   if (values.length === 0) return undefined;
 
   const frequency = new Map<number, number>();
@@ -274,25 +300,25 @@ export function mode(iterable: Iterable<number>): number[] | undefined {
 export function quartiles(
   iterable: Iterable<number>,
 ): { Q1: number; Q2: number; Q3: number } | undefined {
-  const values = Array.from(iterable);
+  const values = Array.isArray(iterable) ? iterable : Array.from(iterable);
   if (values.length === 0) return undefined;
 
-  values.sort((a, b) => a - b);
+  const sorted = values.slice().sort((a, b) => a - b);
 
   const calculatePercentile = (p: number): number => {
-    if (p === 0) return values[0]!;
-    if (p === 100) return values[values.length - 1]!;
+    if (p === 0) return sorted[0]!;
+    if (p === 100) return sorted[sorted.length - 1]!;
 
-    const index = (p / 100) * (values.length - 1);
+    const index = (p / 100) * (sorted.length - 1);
     const lower = Math.floor(index);
     const upper = Math.ceil(index);
 
     if (lower === upper) {
-      return values[lower]!;
+      return sorted[lower]!;
     }
 
     const weight = index - lower;
-    return values[lower]! * (1 - weight) + values[upper]! * weight;
+    return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
   };
 
   return {
