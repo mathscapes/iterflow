@@ -1,6 +1,6 @@
 {
   "name": "iterflow",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "description": "Powerful iterator utilities for ES2022+ with statistical operations, windowing, and lazy evaluation. Forward compatible with ES2025 iterator helpers.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -52,9 +52,13 @@
     "bench:quick": "VITEST_BENCH_TIME=1000 node scripts/run-benchmarks.cjs",
     "bench:all": "node scripts/run-benchmarks.cjs",
     "bench:report": "node scripts/generate-benchmark-report.cjs",
+    "bench:visualize": "python3 scripts/visualize_benchmarks.py",
+    "bench:visualize:bars": "python3 scripts/visualize_benchmarks.py --chart-type seaborn-bars",
+    "bench:visualize:scatter": "python3 scripts/visualize_benchmarks.py --chart-type scatter -o benchmarks/results/competitive_scatter.png",
+    "bench:charts": "python3 scripts/visualize_benchmarks.py --show",
     "bench:update-readme": "node scripts/update-readme-benchmarks.cjs",
     "bench:update-changelog": "node scripts/update-changelog-benchmarks.cjs",
-    "bench:full": "npm run bench:all && npm run bench:report && npm run bench:update-readme",
+    "bench:full": "npm run bench:all && npm run bench:report && npm run bench:visualize",
     "bench:workflow": "bash scripts/run-benchmarks-full.sh"
   },
   "keywords": [
