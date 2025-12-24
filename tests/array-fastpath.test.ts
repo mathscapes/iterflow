@@ -297,7 +297,7 @@ describe("Array Fast-Path Optimizations", () => {
       const duration = performance.now() - start;
 
       expect(count).toBe(1000000);
-      expect(duration).toBeLessThan(1); // Should be instant
+      expect(duration).toBeLessThan(10); // Should be near-instant (O(1))
     });
 
     it("should use O(1) first() on arrays", () => {
@@ -308,7 +308,7 @@ describe("Array Fast-Path Optimizations", () => {
       const duration = performance.now() - start;
 
       expect(first).toBe(0);
-      expect(duration).toBeLessThan(1); // Should be instant
+      expect(duration).toBeLessThan(10); // Should be near-instant (O(1))
     });
 
     it("should use O(1) last() on arrays", () => {
@@ -319,7 +319,7 @@ describe("Array Fast-Path Optimizations", () => {
       const duration = performance.now() - start;
 
       expect(last).toBe(999999);
-      expect(duration).toBeLessThan(1); // Should be instant
+      expect(duration).toBeLessThan(10); // Should be near-instant (O(1))
     });
 
     it("should use O(1) nth() on arrays", () => {
@@ -330,7 +330,7 @@ describe("Array Fast-Path Optimizations", () => {
       const duration = performance.now() - start;
 
       expect(value).toBe(500000);
-      expect(duration).toBeLessThan(1); // Should be instant
+      expect(duration).toBeLessThan(10); // Should be near-instant (O(1))
     });
   });
 

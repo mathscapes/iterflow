@@ -35,6 +35,41 @@ iter([1, 2, 3, 4, 5, 6])
 // [[4, 8], [12]]
 ```
 
+## Resource Limits & Safety (v0.8.0)
+
+New in v0.8.0: Production-ready safety features to protect against infinite loops, slow operations, and runaway resource usage:
+
+```typescript
+// Prevent infinite loops with hard limits
+iter.range(Infinity)
+  .limit(10000)  // Throws if exceeded
+  .toArray(1000); // Collects max 1000 items
+
+// Timeout async operations
+await asyncIter(items)
+  .map(slowOperation)
+  .timeout(5000)  // 5s per iteration
+  .toArray();
+
+// User cancellation with AbortController
+const controller = new AbortController();
+const promise = asyncIter(largeJob)
+  .withSignal(controller.signal)
+  .toArray();
+
+// User clicks cancel
+controller.abort('User cancelled');
+```
+
+**New APIs:**
+- `limit(maxIterations)` - Throw OperationError if iteration limit exceeded
+- `timeout(ms)` - Throw TimeoutError if async operations are too slow
+- `withSignal(signal)` - Integrate with AbortController for cancellation
+- `toArray(maxSize?)` - Optional size limit for safe collection
+- New error types: `TimeoutError`, `AbortError`
+
+For complete details, see the [Resource Limits Guide](docs/guides/resource-limits.md).
+
 ## API
 
 ### Wrapper API

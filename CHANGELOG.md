@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-12-24
+
+### Added
+
+- **Resource Limits & Safety Features** for production-ready protection against runaway operations:
+  - `limit(maxIterations)` - Prevents infinite loops by throwing `OperationError` when iteration count exceeds limit
+    - Fast-path array validation (O(1) without iteration)
+    - Works with all iterator sources
+  - `timeout(ms)` - Adds per-iteration timeout protection to async operations (throws `TimeoutError`)
+    - Each iteration gets full timeout window
+    - Integrates seamlessly with async pipelines
+  - `withSignal(signal)` - Integrates with AbortController for user-initiated cancellation (throws `AbortError`)
+    - Standard web API integration
+    - Proper event listener cleanup
+    - Share signal across multiple operations
+  - `toArray(maxSize?)` - Optional size limit for safe collection with early termination
+    - Early termination improves performance
+    - Works with both sync and async iterators
+  - New error classes: `TimeoutError`, `AbortError` extending `iterflowError`
+- Comprehensive resource limits documentation:
+  - New guide: `docs/guides/resource-limits.md` with examples and best practices
+  - Updated `README.md` with v0.8.0 features section
+  - Updated `SECURITY.md` with resource limit safety information
+  - Added 4 new FAQ entries about resource limits
+- 32 new tests for resource limit features covering:
+  - `limit()` - 6 tests (sync validation, fast-path, edge cases)
+  - `timeout()` - 4 tests (async timeouts, validation)
+  - `withSignal()` - 5 tests (cancellation, cleanup, pre-aborted signals)
+  - `toArray(maxSize)` - 14 tests (sync + async, validation, composition)
+  - Integration tests - 3 tests (combining safety features)
+
+### Changed
+
+- Test suite expanded from 708 to 740 tests (32 new resource limit tests)
+- Coverage maintained at 81.79% statements, 87.93% branches, 87.5% functions
+- All operations maintain 100% backward compatibility - no breaking changes
+
+### Performance
+
+- No performance regressions - all safety features have negligible overhead when not used
+- `limit()` uses O(1) fast-path validation for arrays (instant check without iteration)
+- `toArray(maxSize)` actually improves performance through early termination
+- `timeout()` adds ~0.1-0.5ms overhead per async iteration (acceptable for safety)
+- `withSignal()` minimal event listener overhead with proper cleanup
+
+[0.8.0]: https://github.com/mathscapes/iterflow/releases/tag/v0.8.0
+
 ## [0.7.0] - 2025-12-24
 
 ### Added
