@@ -146,3 +146,37 @@ export class TypeConversionError extends iterflowError {
     this.expectedType = expectedType;
   }
 }
+
+/**
+ * Error thrown when an operation exceeds its timeout duration
+ */
+export class TimeoutError extends iterflowError {
+  public readonly timeoutMs: number;
+
+  constructor(timeoutMs: number, operation?: string) {
+    super(
+      `Operation timed out after ${timeoutMs}ms`,
+      operation,
+      { timeoutMs },
+    );
+    this.name = "TimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+/**
+ * Error thrown when an operation is aborted via AbortSignal
+ */
+export class AbortError extends iterflowError {
+  public readonly reason?: string;
+
+  constructor(operation?: string, reason?: string) {
+    super(
+      reason ? `Operation aborted: ${reason}` : "Operation aborted",
+      operation,
+      { reason },
+    );
+    this.name = "AbortError";
+    this.reason = reason;
+  }
+}

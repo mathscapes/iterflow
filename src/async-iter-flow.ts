@@ -1,4 +1,5 @@
 import { validateRange, validatePositiveInteger, validateNonZero } from "./validation.js";
+import { TimeoutError, AbortError } from "./errors.js";
 
 /**
  * A fluent interface wrapper for working with async iterators and async iterables.
@@ -372,15 +373,30 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Collects all elements into an array.
    * This is a terminal operation that consumes the async iterator.
    *
-   * @returns A promise of an array containing all elements
+   * @param maxSize - Optional maximum array size. If provided and the iterator produces
+   *                  more elements, collection stops at maxSize (no error thrown).
+   *                  This is useful for safely collecting from potentially large iterators.
+   * @returns Promise of array containing all elements (up to maxSize if specified)
+   * @throws {ValidationError} If maxSize is provided but not a positive integer
    * @example
    * ```typescript
    * await asyncIter([1, 2, 3]).map(async x => x * 2).toArray(); // [2, 4, 6]
+   *
+   * // Safely collect from large async iterator
+   * await asyncIter(infiniteStream).toArray(1000); // First 1000 items
    * ```
    */
-  async toArray(): Promise<T[]> {
+  async toArray(maxSize?: number): Promise<T[]> {
+    // Validate maxSize if provided
+    if (maxSize !== undefined) {
+      validatePositiveInteger(maxSize, "maxSize", "toArray");
+    }
+
     const result: T[] = [];
     for await (const value of this) {
+      if (maxSize !== undefined && result.length >= maxSize) {
+        break;
+      }
       result.push(value);
     }
     return result;
@@ -1825,6 +1841,129 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
             await handler(error, value);
             // Continue to next element
           }
+        }
+      },
+    });
+  }
+
+  /**
+   * Adds a timeout to async iteration operations.
+   * If any single iteration (next() call) takes longer than the specified timeout,
+   * a TimeoutError is thrown. Each iteration gets its own timeout window.
+   *
+   * @param ms - Timeout duration in milliseconds (must be positive)
+   * @returns A new async iterflow with timeout protection
+   * @throws {ValidationError} If ms is not a positive number
+   * @throws {TimeoutError} If any iteration exceeds the timeout
+   * @example
+   * ```typescript
+   * // Protect against slow async operations
+   * await asyncIter([1, 2, 3])
+   *   .map(async x => {
+   *     await slowOperation(x); // Each must complete within 5000ms
+   *     return x;
+   *   })
+   *   .timeout(5000)
+   *   .toArray();
+   * ```
+   */
+  timeout(ms: number): Asynciterflow<T> {
+    validatePositiveInteger(ms, "timeout", "timeout");
+
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        const iterator = self[Symbol.asyncIterator]();
+
+        while (true) {
+          // Create a timeout promise that rejects
+          const timeoutPromise = new Promise<IteratorResult<T>>((_, reject) => {
+            setTimeout(() => {
+              reject(new TimeoutError(ms, "timeout"));
+            }, ms);
+          });
+
+          // Race between next() and timeout
+          const result = await Promise.race([iterator.next(), timeoutPromise]);
+
+          if (result.done) break;
+          yield result.value;
+        }
+      },
+    });
+  }
+
+  /**
+   * Adds AbortSignal support to the async iteration.
+   * If the signal is aborted, iteration stops immediately with an AbortError.
+   * Checks the signal before each iteration and listens for abort events.
+   *
+   * @param signal - AbortSignal to control iteration cancellation
+   * @returns A new async iterflow with abort support
+   * @throws {AbortError} If the signal is aborted
+   * @example
+   * ```typescript
+   * const controller = new AbortController();
+   *
+   * // Cancel after 5 seconds
+   * setTimeout(() => controller.abort('Timeout reached'), 5000);
+   *
+   * try {
+   *   await asyncIter(largeDataset)
+   *     .withSignal(controller.signal)
+   *     .map(processItem)
+   *     .toArray();
+   * } catch (error) {
+   *   if (error instanceof AbortError) {
+   *     console.log('Operation cancelled:', error.reason);
+   *   }
+   * }
+   * ```
+   */
+  withSignal(signal: AbortSignal): Asynciterflow<T> {
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        // Check if already aborted
+        if (signal.aborted) {
+          throw new AbortError(
+            "withSignal",
+            typeof signal.reason === "string" ? signal.reason : undefined,
+          );
+        }
+
+        const iterator = self[Symbol.asyncIterator]();
+
+        // Create abort promise that we can resolve/reject externally
+        let abortReject: ((error: AbortError) => void) | undefined;
+        const abortPromise = new Promise<IteratorResult<T>>((_, reject) => {
+          abortReject = reject;
+        });
+
+        // Listen for abort events
+        const abortHandler = () => {
+          if (abortReject) {
+            abortReject(
+              new AbortError(
+                "withSignal",
+                typeof signal.reason === "string" ? signal.reason : undefined,
+              ),
+            );
+          }
+        };
+        signal.addEventListener("abort", abortHandler);
+
+        try {
+          while (true) {
+            // Race between next() and abort
+            const result = await Promise.race([iterator.next(), abortPromise]);
+
+            if (result.done) break;
+            yield result.value;
+          }
+        } finally {
+          // Clean up event listener
+          signal.removeEventListener("abort", abortHandler);
         }
       },
     });

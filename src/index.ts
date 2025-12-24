@@ -378,6 +378,8 @@ export {
   EmptySequenceError,
   IndexOutOfBoundsError,
   TypeConversionError,
+  TimeoutError,
+  AbortError,
 } from "./errors.js";
 
 // Export validation utilities

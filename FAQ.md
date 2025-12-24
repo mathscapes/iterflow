@@ -675,6 +675,175 @@ iter.repeat('x', 3).toArray();
 iter(myGenerator()).take(10).toArray();
 ```
 
+### How do I prevent infinite loops in production? (v0.8.0+)
+
+Use `limit()` to enforce hard iteration limits and catch runaway iterators:
+
+```typescript
+import { iter, OperationError } from 'iterflow';
+
+// Prevent infinite loops with limit()
+try {
+  const result = iter(untrustedIterator)
+    .map(transform)
+    .limit(100000)  // Throws OperationError if exceeded
+    .toArray();
+} catch (error) {
+  if (error instanceof OperationError) {
+    console.error('Iterator exceeded safety limit');
+  }
+}
+
+// Works normally for finite iterators
+iter([1, 2, 3]).limit(10).toArray();  // [1, 2, 3] - no error
+
+// Throws for infinite iterators
+iter.range(Infinity).limit(1000).toArray();  // OperationError!
+```
+
+**When to use limit() vs take():**
+
+```typescript
+// limit() - Safety enforcement (throws on exceeding)
+iter(unknownSource)
+  .limit(10000)    // Safety check - throws if exceeded
+  .toArray();
+
+// take() - Intentional truncation (no error)
+iter.range(Infinity)
+  .take(100)       // Get first 100 items
+  .toArray();      // [0, 1, ..., 99]
+
+// Combine both for defense in depth
+iter(unknownSource)
+  .take(1000)      // Intentional limit
+  .limit(10000)    // Safety check (should never hit)
+  .toArray();
+```
+
+See [Resource Limits Guide](./docs/guides/resource-limits.md) for details.
+
+### How can I add timeouts to async operations? (v0.8.0+)
+
+Use `timeout()` to prevent slow async operations from hanging:
+
+```typescript
+import { asyncIter, TimeoutError } from 'iterflow';
+
+// Timeout async operations
+try {
+  const result = await asyncIter(urls)
+    .map(async url => await fetch(url))
+    .timeout(5000)  // 5 seconds per iteration
+    .toArray();
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error(`Operation timed out after ${error.timeoutMs}ms`);
+  }
+}
+
+// Combine with other safety features
+await asyncIter(externalData)
+  .map(processItem)
+  .timeout(10000)       // 10s per item
+  .toArray(1000);       // Max 1000 results
+```
+
+**Important:** `timeout()` is **per-iteration**, not total operation time. Each item gets the full timeout window.
+
+See [Resource Limits Guide](./docs/guides/resource-limits.md) for details.
+
+### How do I allow users to cancel long-running operations? (v0.8.0+)
+
+Use `withSignal()` to integrate with AbortController for user-initiated cancellation:
+
+```typescript
+import { asyncIter, AbortError } from 'iterflow';
+
+// Setup cancellable operation
+const controller = new AbortController();
+
+const promise = asyncIter(largeDataset)
+  .withSignal(controller.signal)
+  .map(processItem)
+  .toArray();
+
+// User clicks cancel button
+cancelButton.onclick = () => {
+  controller.abort('User cancelled operation');
+};
+
+// Handle cancellation
+try {
+  const result = await promise;
+  console.log('Completed:', result);
+} catch (error) {
+  if (error instanceof AbortError) {
+    console.log('Cancelled:', error.reason);  // "User cancelled operation"
+  }
+}
+```
+
+**Share controller across multiple operations:**
+
+```typescript
+const controller = new AbortController();
+
+const operations = [
+  asyncIter(dataset1).withSignal(controller.signal).toArray(),
+  asyncIter(dataset2).withSignal(controller.signal).toArray(),
+  asyncIter(dataset3).withSignal(controller.signal).toArray(),
+];
+
+// Cancel all operations at once
+controller.abort('Batch cancelled');
+
+const results = await Promise.allSettled(operations);
+// All promises rejected with AbortError
+```
+
+See [Resource Limits Guide](./docs/guides/resource-limits.md) for details.
+
+### What's the difference between limit() and take()?
+
+Both limit iteration count, but with different behavior:
+
+```typescript
+import { iter } from 'iterflow';
+
+// take() - Intentional truncation (no error)
+iter([1, 2, 3, 4, 5])
+  .take(3)
+  .toArray();
+// [1, 2, 3] - stops early, no error
+
+// limit() - Safety enforcement (throws on exceeding)
+iter([1, 2, 3, 4, 5])
+  .limit(3)
+  .toArray();
+// OperationError! Iterator exceeded limit
+
+// Use take() when you WANT first N items
+iter.range(Infinity).take(100).toArray();  // OK: [0, 1, ..., 99]
+
+// Use limit() when you EXPECT finite iterator
+iter(unknownSource).limit(10000).toArray();  // Throws if > 10K
+```
+
+**When to use each:**
+
+- **`take(n)`**: Get first N items intentionally (truncation)
+- **`limit(n)`**: Enforce safety limit and catch violations (validation)
+
+**Combine for best safety:**
+
+```typescript
+iter(unknownSource)
+  .take(100)       // Intentional: want 100 items
+  .limit(10000)    // Safety: should never hit this
+  .toArray();
+```
+
 ### How do I combine multiple iterators?
 
 ```typescript

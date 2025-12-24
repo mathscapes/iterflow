@@ -1,4 +1,5 @@
 import { validateRange, validatePositiveInteger } from "./validation.js";
+import { OperationError } from "./errors.js";
 
 /**
  * A fluent interface wrapper for working with iterators and iterables.
@@ -125,6 +126,61 @@ export class iterflow<T> implements Iterable<T> {
         let count = 0;
         for (const value of self) {
           if (count >= limit) break;
+          yield value;
+          count++;
+        }
+      },
+    });
+  }
+
+  /**
+   * Limits the maximum number of iterations to prevent infinite loops.
+   * Unlike `take()` which silently stops at the limit, this method throws
+   * an OperationError if the limit is exceeded, making infinite loops explicit.
+   *
+   * @param maxIterations - Maximum number of iterations allowed (must be at least 1)
+   * @returns A new iterflow that will throw if limit is exceeded
+   * @throws {ValidationError} If maxIterations is not a positive integer
+   * @throws {OperationError} If iteration count exceeds maxIterations
+   * @example
+   * ```typescript
+   * // Safely process potentially infinite iterator
+   * iter.range(Infinity).limit(1000).toArray(); // Throws after 1000 iterations
+   *
+   * // Regular finite iterator works normally
+   * iter([1, 2, 3]).limit(10).toArray(); // [1, 2, 3]
+   * ```
+   */
+  limit(maxIterations: number): iterflow<T> {
+    validatePositiveInteger(maxIterations, "maxIterations", "limit");
+
+    // Fast-path: validate arrays immediately
+    if (this._sourceArray) {
+      if (this._sourceArray.length > maxIterations) {
+        throw new OperationError(
+          `Iterator exceeded limit of ${maxIterations} iterations`,
+          "limit",
+          undefined,
+          { maxIterations, actualCount: this._sourceArray.length },
+        );
+      }
+      return new iterflow(this._sourceArray);
+    }
+
+    // Lazy generator for iterators
+    const self = this;
+    return new iterflow({
+      *[Symbol.iterator]() {
+        let count = 0;
+        for (const value of self) {
+          if (count >= maxIterations) {
+            throw new OperationError(
+              `Iterator exceeded limit of ${maxIterations} iterations`,
+              "limit",
+              undefined,
+              { maxIterations },
+            );
+          }
           yield value;
           count++;
         }
@@ -396,17 +452,50 @@ export class iterflow<T> implements Iterable<T> {
    * Collects all elements into an array.
    * This is a terminal operation that consumes the iterator.
    *
-   * @returns An array containing all elements
+   * @param maxSize - Optional maximum array size. If provided and the iterator produces
+   *                  more elements, collection stops at maxSize (no error thrown).
+   *                  This is useful for safely collecting from potentially large iterators.
+   * @returns Array containing all elements (up to maxSize if specified)
+   * @throws {ValidationError} If maxSize is provided but not a positive integer
    * @example
    * ```typescript
    * iter([1, 2, 3]).map(x => x * 2).toArray(); // [2, 4, 6]
+   *
+   * // Safely collect from large/infinite iterator
+   * iter.range(Infinity).toArray(1000); // [0, 1, 2, ..., 999]
+   *
+   * // Works with finite iterators too
+   * iter([1, 2, 3]).toArray(10); // [1, 2, 3] (stops early)
    * ```
    */
-  toArray(): T[] {
+  toArray(maxSize?: number): T[] {
+    // Validate maxSize if provided
+    if (maxSize !== undefined) {
+      validatePositiveInteger(maxSize, "maxSize", "toArray");
+    }
+
+    // Fast-path for arrays
     if (this._sourceArray) {
+      if (maxSize !== undefined) {
+        return this._sourceArray.slice(0, maxSize);
+      }
       return this._sourceArray.slice();
     }
-    return Array.from(this);
+
+    // No limit - use Array.from
+    if (maxSize === undefined) {
+      return Array.from(this);
+    }
+
+    // Collect with size limit
+    const result: T[] = [];
+    for (const value of this) {
+      if (result.length >= maxSize) {
+        break;
+      }
+      result.push(value);
+    }
+    return result;
   }
 
   /**
