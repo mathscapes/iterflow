@@ -1,5 +1,5 @@
 import { validateRange, validatePositiveInteger, validateNonZero } from "./validation.js";
-import { TimeoutError, AbortError } from "./errors.js";
+import { TimeoutError, AbortError, OperationError } from "./errors.js";
 
 /**
  * A fluent interface wrapper for working with async iterators and async iterables.
@@ -146,6 +146,47 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
             continue;
           }
           yield value;
+        }
+      },
+    });
+  }
+
+  /**
+   * Limits the maximum number of iterations to prevent infinite loops.
+   * Unlike `take()` which silently stops at the limit, this method throws
+   * an OperationError if the limit is exceeded, making infinite loops explicit.
+   *
+   * @param maxIterations - Maximum number of iterations allowed (must be at least 1)
+   * @returns A new async iterflow that will throw if limit is exceeded
+   * @throws {ValidationError} If maxIterations is not a positive integer
+   * @throws {OperationError} If iteration count exceeds maxIterations
+   * @example
+   * ```typescript
+   * // Safely process potentially infinite async iterator
+   * await asyncIter.range(Infinity).limit(1000).toArray(); // Throws after 1000 iterations
+   *
+   * // Regular finite iterator works normally
+   * await asyncIter([1, 2, 3]).limit(10).toArray(); // [1, 2, 3]
+   * ```
+   */
+  limit(maxIterations: number): Asynciterflow<T> {
+    validatePositiveInteger(maxIterations, "maxIterations", "limit");
+
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        let count = 0;
+        for await (const value of self) {
+          if (count >= maxIterations) {
+            throw new OperationError(
+              `Iterator exceeded limit of ${maxIterations} iterations`,
+              "limit",
+              undefined,
+              { maxIterations },
+            );
+          }
+          yield value;
+          count++;
         }
       },
     });
@@ -613,7 +654,7 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
     values.sort((a, b) => a - b);
 
     if (p === 0) return values[0]!;
-    if (p === 100) return values[values.length - 1]!
+    if (p === 100) return values[values.length - 1]!;
 
     const index = (p / 100) * (values.length - 1);
     const lower = Math.floor(index);
@@ -1964,6 +2005,158 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
         } finally {
           // Clean up event listener
           signal.removeEventListener("abort", abortHandler);
+        }
+      },
+    });
+  }
+
+  /**
+   * Interleaves elements from this async iterator with elements from other async/sync iterables.
+   * Takes one element from each iterable in round-robin fashion.
+   *
+   * @param others - Variable number of async/sync iterables to interleave with
+   * @returns A new async iterflow with elements from all iterables interleaved
+   * @example
+   * ```typescript
+   * await asyncIter([1, 2, 3]).interleave([4, 5, 6]).toArray(); // [1, 4, 2, 5, 3, 6]
+   * ```
+   */
+  interleave(...others: Array<AsyncIterable<T> | Iterable<T>>): Asynciterflow<T> {
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        const allIterables = [self, ...others];
+        if (allIterables.length === 0) return;
+
+        const iterators = allIterables.map((it) =>
+          Symbol.asyncIterator in it
+            ? it[Symbol.asyncIterator]()
+            : (async function* () {
+                yield* it as Iterable<T>;
+              })(),
+        );
+        const active = new Set(iterators);
+
+        while (active.size > 0) {
+          for (const iterator of iterators) {
+            if (!active.has(iterator)) continue;
+
+            const result = await iterator.next();
+            if (result.done) {
+              active.delete(iterator);
+            } else {
+              yield result.value;
+            }
+          }
+        }
+      },
+    });
+  }
+
+  /**
+   * Merges this async iterator with other sorted async/sync iterables into a single sorted async iterator.
+   * Assumes all input iterables are already sorted in ascending order.
+   *
+   * @param others - Variable number of sorted async/sync iterables to merge with
+   * @returns A new async iterflow with all elements merged in sorted order
+   * @example
+   * ```typescript
+   * await asyncIter([1, 3, 5]).merge([2, 4, 6]).toArray(); // [1, 2, 3, 4, 5, 6]
+   * ```
+   */
+  merge(...others: Array<AsyncIterable<T> | Iterable<T>>): Asynciterflow<T> {
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        const allIterables = [self, ...others];
+        if (allIterables.length === 0) return;
+
+        // Default comparator for numbers/strings
+        const compareFn = (a: T, b: T) => {
+          if (a < b) return -1;
+          if (a > b) return 1;
+          return 0;
+        };
+
+        // Initialize all iterators with their first value
+        const heap: Array<{
+          value: T;
+          iterator: AsyncIterator<T>;
+          index: number;
+        }> = [];
+
+        for (let i = 0; i < allIterables.length; i++) {
+          const iterable = allIterables[i]!;
+          const iterator =
+            Symbol.asyncIterator in iterable
+              ? iterable[Symbol.asyncIterator]()
+              : (async function* () {
+                  yield* iterable as Iterable<T>;
+                })();
+
+          const result = await iterator.next();
+          if (!result.done) {
+            heap.push({ value: result.value, iterator, index: i });
+          }
+        }
+
+        // Helper to maintain min-heap property
+        const bubbleDown = (index: number) => {
+          const length = heap.length;
+          while (true) {
+            let smallest = index;
+            const leftChild = 2 * index + 1;
+            const rightChild = 2 * index + 2;
+
+            if (
+              leftChild < length &&
+              compareFn(heap[leftChild]!.value, heap[smallest]!.value) < 0
+            ) {
+              smallest = leftChild;
+            }
+
+            if (
+              rightChild < length &&
+              compareFn(heap[rightChild]!.value, heap[smallest]!.value) < 0
+            ) {
+              smallest = rightChild;
+            }
+
+            if (smallest === index) break;
+
+            // Swap elements
+            const temp = heap[index]!;
+            heap[index] = heap[smallest]!;
+            heap[smallest] = temp;
+            index = smallest;
+          }
+        };
+
+        // Build initial heap
+        for (let i = Math.floor(heap.length / 2) - 1; i >= 0; i--) {
+          bubbleDown(i);
+        }
+
+        // Main merge loop
+        while (heap.length > 0) {
+          // Get minimum element
+          const min = heap[0]!;
+          yield min.value;
+
+          // Get next value from the same iterator
+          const nextResult = await min.iterator.next();
+          if (nextResult.done) {
+            // Remove this iterator from heap
+            heap[0] = heap[heap.length - 1]!;
+            heap.pop();
+            if (heap.length > 0) {
+              bubbleDown(0);
+            }
+          } else {
+            // Update heap with new value
+            heap[0] = { value: nextResult.value, iterator: min.iterator, index: min.index };
+            bubbleDown(0);
+          }
         }
       },
     });

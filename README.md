@@ -5,6 +5,12 @@ Iterator utilities for ES2022+ with statistical operations, windowing, and lazy 
 [![npm version](https://img.shields.io/npm/v/iterflow.svg)](https://www.npmjs.com/package/iterflow)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](https://unlicense.org/)
 
+---
+
+**v0.9.0 Release Candidate**. See [MIGRATION.md](docs/MIGRATION.md) for upgrade guidance.
+
+---
+
 ## Installation
 
 ```bash
@@ -297,8 +303,11 @@ See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data a
 
 ## Documentation
 
+- **[API Reference](docs/API.md)** - Complete API documentation for all methods (v0.9.0+)
+- **[Migration Guide](docs/MIGRATION.md)** - Upgrading from v0.x to v1.0 (v0.9.0+)
 - **[FAQ](FAQ.md)** - Frequently asked questions, common patterns, and troubleshooting
 - **[Examples](examples/)** - Real-world usage examples
+- **[Resource Limits Guide](docs/guides/resource-limits.md)** - Production safety features (v0.8.0+)
 - **[Memory Safety Guide](docs/guides/memory-safety.md)** - Avoiding memory leaks and efficient memory usage
 - **[Performance Guide](docs/PERFORMANCE.md)** - Optimization techniques and benchmarking
 - **[Benchmarking Guide](docs/BENCHMARKING.md)** - Running and interpreting benchmarks

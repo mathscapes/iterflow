@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-12-25
+
+### Added
+
+- **API Stabilization - Release Candidate for v1.0**:
+  - `Asynciterflow.limit()` - Added async version of limit() for API parity with sync iterflow
+  - `Asynciterflow.interleave()` - Added instance method (was previously only available as static method)
+  - `Asynciterflow.merge()` - Added instance method (was previously only available as static method)
+  - Comprehensive API stability tests - 36 new tests locking down the public API surface
+  - Complete migration guide: `docs/MIGRATION.md` for v0.x → v1.0 transition
+  - Comprehensive API reference: `docs/API.md` documenting all 232 public methods
+
+### Changed
+
+- Test suite expanded from 740 to 776 tests (36 new API stability tests)
+- All operations maintain 100% backward compatibility
+- Type safety improvements: Fixed non-null assertions in percentile() (3 locations)
+
+### Deprecated
+
+- `stddev()` - Use `stdDev()` instead (will be removed in v1.0.0)
+- `skip()` - Use `drop()` instead (will be removed in v1.0.0)
+
+### Documentation
+
+- Added comprehensive API reference (`docs/API.md`)
+- Added migration guide (`docs/MIGRATION.md`)
+- Added API stability tests to prevent accidental breaking changes
+
+[0.9.0]: https://github.com/mathscapes/iterflow/releases/tag/v0.9.0
+
 ## [0.8.0] - 2025-12-24
 
 ### Added

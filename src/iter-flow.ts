@@ -721,7 +721,7 @@ export class iterflow<T> implements Iterable<T> {
     const sorted = values.slice().sort((a, b) => a - b);
 
     if (p === 0) return sorted[0]!;
-    if (p === 100) return sorted[sorted.length - 1]!
+    if (p === 100) return sorted[sorted.length - 1]!;
 
     const index = (p / 100) * (sorted.length - 1);
     const lower = Math.floor(index);
@@ -1520,6 +1520,8 @@ export class iterflow<T> implements Iterable<T> {
   /**
    * Alias for stdDev() method for compatibility.
    * Calculates the standard deviation of all numeric elements.
+   *
+   * @deprecated Use stdDev() instead. This alias will be removed in v1.0.0.
    */
   stddev(this: iterflow<number>): number | undefined {
     return this.stdDev();
@@ -1528,6 +1530,8 @@ export class iterflow<T> implements Iterable<T> {
   /**
    * Alias for drop() method for compatibility.
    * Skips the first `count` elements from the iterator.
+   *
+   * @deprecated Use drop() instead. This alias will be removed in v1.0.0.
    */
   skip(count: number): iterflow<T> {
     return this.drop(count);
