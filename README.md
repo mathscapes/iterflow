@@ -7,9 +7,6 @@ Iterator utilities for ES2022+ with statistical operations, windowing, and lazy 
 
 ---
 
-**v0.9.0 Release Candidate**. See [MIGRATION.md](docs/MIGRATION.md) for upgrade guidance.
-
----
 
 ## Installation
 
@@ -330,6 +327,38 @@ For quick start:
 4. Submit a PR to `dev`
 
 See [PLAYBOOK.md](PLAYBOOK.md) for complete details.
+
+## Semantic Versioning Commitment
+
+Starting with v1.0.0, iterflow follows strict semantic versioning:
+
+- **Major versions** (2.0.0, 3.0.0): Breaking changes to public API
+- **Minor versions** (1.1.0, 1.2.0): New features, backwards-compatible
+- **Patch versions** (1.0.1, 1.0.2): Bug fixes, no API changes
+
+### API Stability Guarantee
+
+The following APIs are stable and will not have breaking changes in 1.x:
+
+- All public methods on `iterflow<T>` class (116 methods)
+- All public methods on `Asynciterflow<T>` class (116 methods)
+- All exports from `iterflow/fn` functional API
+- All error classes (`iterflowError`, `TimeoutError`, `AbortError`, `OperationError`)
+- All TypeScript type definitions and interfaces
+
+### What We Promise
+
+- **No breaking changes** in minor or patch releases
+- **Comprehensive changelog** for all releases
+- **Deprecation warnings** before any breaking changes (minimum 1 major version notice)
+- **Migration guides** for major version upgrades
+- **Long-term support** for 1.x (at least 18 months from v1.0.0 release)
+
+### Reporting Issues
+
+- **Bugs**: https://github.com/mathscapes/iterflow/issues
+- **Security**: See [SECURITY.md](SECURITY.md) for responsible disclosure
+- **Feature Requests**: https://github.com/mathscapes/iterflow/discussions
 
 ## License
 
