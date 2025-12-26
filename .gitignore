@@ -113,7 +113,6 @@ examples/*-streams.ts
 CODE_OF_CONDUCT.md
 SECURITY.md
 .mcp.json
-package-lock.json
 
 .specify
 .venv

@@ -73,4 +73,4 @@ jobs:
         test -f dist/index.js || exit 1
         test -f dist/index.cjs || exit 1
         test -f dist/index.d.ts || exit 1
-        echo "✓ All build artifacts present"
+        echo "All build artifacts present"
