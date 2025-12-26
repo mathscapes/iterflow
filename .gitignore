@@ -98,7 +98,6 @@ website/
 docs/api-generated/
 packages/
 templates/
-test-d/
 
 # Broken examples (to be fixed in future release)
 examples/*-streaming.ts
@@ -121,3 +120,5 @@ specs/*/report/
 
 # Keep markdown docs, exclude HTML docs
 docs/api-generated/
+
+# Note: test-d/ contains type tests - should be committed
