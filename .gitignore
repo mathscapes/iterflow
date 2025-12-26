@@ -95,10 +95,9 @@ benchmarks/
 scripts/*
 !scripts/release.js
 website/
-docs/
+docs/api-generated/
 packages/
 templates/
-test-d/
 
 # Broken examples (to be fixed in future release)
 examples/*-streaming.ts
@@ -112,6 +111,14 @@ examples/*-streams.ts
 # Future documentation
 CODE_OF_CONDUCT.md
 SECURITY.md
-typedoc.json
 .mcp.json
-package-lock.json
+
+.specify
+.venv
+specs
+specs/*/report/
+
+# Keep markdown docs, exclude HTML docs
+docs/api-generated/
+
+# Note: test-d/ contains type tests - should be committed

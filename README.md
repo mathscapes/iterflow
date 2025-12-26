@@ -3,10 +3,11 @@
 Iterator utilities for ES2022+ with statistical operations, windowing, and lazy evaluation.
 
 [![npm version](https://img.shields.io/npm/v/iterflow.svg)](https://www.npmjs.com/package/iterflow)
+[![CI](https://img.shields.io/github/actions/workflow/status/mathscapes/iterflow/ci.yml?branch=main)](https://github.com/mathscapes/iterflow/actions)
+[![Coverage](https://img.shields.io/badge/coverage-81%25-brightgreen)](https://github.com/mathscapes/iterflow)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](https://github.com/mathscapes/iterflow/blob/main/package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6%2B-blue)](https://www.typescriptlang.org/)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](https://unlicense.org/)
-
----
-
 
 ## Installation
 
@@ -38,217 +39,88 @@ iter([1, 2, 3, 4, 5, 6])
 // [[4, 8], [12]]
 ```
 
-## Resource Limits & Safety (v0.8.0)
-
-New in v0.8.0: Production-ready safety features to protect against infinite loops, slow operations, and runaway resource usage:
-
-```typescript
-// Prevent infinite loops with hard limits
-iter.range(Infinity)
-  .limit(10000)  // Throws if exceeded
-  .toArray(1000); // Collects max 1000 items
-
-// Timeout async operations
-await asyncIter(items)
-  .map(slowOperation)
-  .timeout(5000)  // 5s per iteration
-  .toArray();
-
-// User cancellation with AbortController
-const controller = new AbortController();
-const promise = asyncIter(largeJob)
-  .withSignal(controller.signal)
-  .toArray();
-
-// User clicks cancel
-controller.abort('User cancelled');
-```
-
-**New APIs:**
-- `limit(maxIterations)` - Throw OperationError if iteration limit exceeded
-- `timeout(ms)` - Throw TimeoutError if async operations are too slow
-- `withSignal(signal)` - Integrate with AbortController for cancellation
-- `toArray(maxSize?)` - Optional size limit for safe collection
-- New error types: `TimeoutError`, `AbortError`
-
-For complete details, see the [Resource Limits Guide](docs/guides/resource-limits.md).
-
-## API
-
-### Wrapper API
-
-```typescript
-import { iter } from 'iterflow';
-
-iter([1, 2, 3, 4, 5])
-  .filter(x => x > 2)    // Native iterator method
-  .map(x => x * 2)       // Native iterator method
-  .sum();                // iterflow extension - 24
-```
-
-### Functional API
-
-```typescript
-import { sum, filter, map } from 'iterflow/fn';
-
-const data = [1, 2, 3, 4, 5];
-sum(map(x => x * 2)(filter(x => x > 2)(data))); // 24
-```
-
-## Operations
+## Core Operations
 
 ### Statistical
 
 ```typescript
-iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).sum();          // 55
-iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).mean();         // 5.5
-iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).median();       // 5.5
-iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).variance();     // 8.25
-iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).percentile(75); // 7.75
+iter([1, 2, 3, 4, 5]).sum();          // 15
+iter([1, 2, 3, 4, 5]).mean();         // 3
+iter([1, 2, 3, 4, 5]).median();       // 3
+iter([1, 2, 3, 4, 5]).variance();     // 2
 ```
 
 ### Windowing
 
 ```typescript
-// Sliding window
-iter([1, 2, 3, 4, 5]).window(3).toArray();
-// [[1,2,3], [2,3,4], [3,4,5]]
-
-// Non-overlapping chunks
-iter([1, 2, 3, 4, 5]).chunk(2).toArray();
-// [[1,2], [3,4], [5]]
-
-// Consecutive pairs
-iter([1, 2, 3, 4]).pairwise().toArray();
-// [[1,2], [2,3], [3,4]]
+iter([1, 2, 3, 4, 5]).window(3).toArray();  // [[1,2,3], [2,3,4], [3,4,5]]
+iter([1, 2, 3, 4, 5]).chunk(2).toArray();   // [[1,2], [3,4], [5]]
 ```
 
-### Grouping
+### Transformations
 
 ```typescript
-// Partition by predicate
-const [evens, odds] = iter([1, 2, 3, 4, 5, 6])
-  .partition(x => x % 2 === 0);
-
-// Group by key function
-const items = [
-  { category: 'fruit', name: 'apple' },
-  { category: 'vegetable', name: 'carrot' },
-  { category: 'fruit', name: 'banana' }
-];
-
-const groups = iter(items).groupBy(item => item.category);
-```
-
-### Set Operations
-
-```typescript
-// Remove duplicates
-iter([1, 2, 2, 3, 3, 3, 4]).distinct().toArray();
-// [1, 2, 3, 4]
-
-// Remove duplicates by key
-iter(people).distinctBy(person => person.id).toArray();
-```
-
-### Combining
-
-```typescript
-// Zip iterators
-iter.zip([1, 2, 3], ['a', 'b', 'c']).toArray();
-// [[1,'a'], [2,'b'], [3,'c']]
-
-// Interleave round-robin
-iter.interleave([1, 2, 3], [4, 5, 6]).toArray();
-// [1, 4, 2, 5, 3, 6]
-
-// Merge sorted iterators
-iter.merge([1, 3, 5], [2, 4, 6]).toArray();
-// [1, 2, 3, 4, 5, 6]
-```
-
-### Utilities
-
-```typescript
-// Side effects
-iter([1, 2, 3])
-  .tap(x => console.log(`Processing: ${x}`))
+iter([1, 2, 3, 4, 5])
   .map(x => x * 2)
+  .filter(x => x > 5)
+  .take(3)
+  .toArray();  // [6, 8, 10]
+```
+
+### Resource Limits (v0.8.0+)
+
+```typescript
+// Prevent infinite loops
+iter.range(Infinity)
+  .limit(10000)      // Throws if exceeded
+  .toArray(1000);    // Collects max 1000
+
+// Timeout async operations
+await asyncIter(items)
+  .timeout(5000)     // 5s per iteration
   .toArray();
 
-// Conditional take/drop
-iter([1, 2, 3, 4, 3, 2, 1]).takeWhile(x => x < 4).toArray();
-// [1, 2, 3]
-
-iter([1, 2, 3, 4, 5]).dropWhile(x => x < 3).toArray();
-// [3, 4, 5]
+// User cancellation
+const controller = new AbortController();
+asyncIter(data).withSignal(controller.signal).toArray();
+controller.abort();  // Cancel anytime
 ```
 
-### Generators
+## Documentation
+
+- **[API Reference](./docs/api/index.md)** - Complete TypeScript API documentation
+- **[Examples](./examples/)** - Real-world usage examples
+
+## When to Use iterflow
+
+### Use iterflow when
+
+- Large datasets (1000+ items) - lazy evaluation avoids unnecessary work
+- Early termination - finding first match, taking limited results
+- Memory efficiency - windowing, chunking, processing huge files
+- Complex pipelines - chaining 3+ operations
+- Statistical operations - mean, median, variance, percentiles
+
+### Consider alternatives when
+
+- Small arrays (< 100 items) - native Array methods are slightly faster
+- Single simple operation - map or filter alone
+- Need multiple iterations - arrays are easier to loop over multiple times
+
+## API Styles
+
+### Wrapper API (Recommended for most use cases)
 
 ```typescript
-// Numeric ranges
-iter.range(5).toArray();           // [0, 1, 2, 3, 4]
-iter.range(2, 8).toArray();        // [2, 3, 4, 5, 6, 7]
-iter.range(0, 10, 2).toArray();    // [0, 2, 4, 6, 8]
+import { iter } from 'iterflow';
 
-// Repeat values
-iter.repeat('hello', 3).toArray();  // ['hello', 'hello', 'hello']
-iter.repeat(0).take(5).toArray();   // [0, 0, 0, 0, 0]
-```
-
-## Examples
-
-### Processing Pipeline
-
-```typescript
-interface Sale {
-  product: string;
-  amount: number;
-  category: string;
-}
-
-const sales: Sale[] = [
-  { product: 'Laptop', amount: 1200, category: 'Electronics' },
-  { product: 'Mouse', amount: 25, category: 'Electronics' },
-  { product: 'Book', amount: 15, category: 'Books' },
-];
-
-// Average electronics sale amount
-const electronicsAvg = iter(sales)
-  .filter(sale => sale.category === 'Electronics')
-  .map(sale => sale.amount)
-  .mean();
-
-// Total sales by category
-const salesByCategory = iter(sales)
-  .groupBy(sale => sale.category)
-  .entries()
-  .map(([category, sales]) => ({
-    category,
-    total: iter(sales).map(sale => sale.amount).sum()
-  }));
-```
-
-### Infinite Sequences
-
-```typescript
-function* fibonacci() {
-  let a = 0, b = 1;
-  while (true) {
-    yield a;
-    [a, b] = [b, a + b];
-  }
-}
-
-// First 10 even fibonacci numbers
-const evenFibs = iter(fibonacci())
+iter([1, 2, 3, 4, 5])
   .filter(x => x % 2 === 0)
-  .take(10)
-  .toArray();
+  .map(x => x * 2)
+  .sum();  // 12
 ```
 
-### Moving Averages
+### Functional API (Better tree-shaking)
 
 ```typescript
 const temperatures = [20, 22, 25, 23, 21, 19, 18, 20, 22, 24];
@@ -300,11 +172,8 @@ See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data a
 
 ## Documentation
 
-- **[API Reference](docs/API.md)** - Complete API documentation for all methods (v0.9.0+)
-- **[Migration Guide](docs/MIGRATION.md)** - Upgrading from v0.x to v1.0 (v0.9.0+)
 - **[FAQ](FAQ.md)** - Frequently asked questions, common patterns, and troubleshooting
 - **[Examples](examples/)** - Real-world usage examples
-- **[Resource Limits Guide](docs/guides/resource-limits.md)** - Production safety features (v0.8.0+)
 - **[Memory Safety Guide](docs/guides/memory-safety.md)** - Avoiding memory leaks and efficient memory usage
 - **[Performance Guide](docs/PERFORMANCE.md)** - Optimization techniques and benchmarking
 - **[Benchmarking Guide](docs/BENCHMARKING.md)** - Running and interpreting benchmarks
@@ -312,14 +181,7 @@ See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data a
 
 ## Contributing
 
-We welcome contributions! Please see our [PLAYBOOK.md](PLAYBOOK.md) for:
-
-- Development workflow and branching strategy
-- Commit message guidelines
-- Testing requirements
-- Release process
-
-For quick start:
+Quick start:
 
 1. Fork the repository
 2. Create a feature branch from `dev`
@@ -327,38 +189,6 @@ For quick start:
 4. Submit a PR to `dev`
 
 See [PLAYBOOK.md](PLAYBOOK.md) for complete details.
-
-## Semantic Versioning Commitment
-
-Starting with v1.0.0, iterflow follows strict semantic versioning:
-
-- **Major versions** (2.0.0, 3.0.0): Breaking changes to public API
-- **Minor versions** (1.1.0, 1.2.0): New features, backwards-compatible
-- **Patch versions** (1.0.1, 1.0.2): Bug fixes, no API changes
-
-### API Stability Guarantee
-
-The following APIs are stable and will not have breaking changes in 1.x:
-
-- All public methods on `iterflow<T>` class (116 methods)
-- All public methods on `Asynciterflow<T>` class (116 methods)
-- All exports from `iterflow/fn` functional API
-- All error classes (`iterflowError`, `TimeoutError`, `AbortError`, `OperationError`)
-- All TypeScript type definitions and interfaces
-
-### What We Promise
-
-- **No breaking changes** in minor or patch releases
-- **Comprehensive changelog** for all releases
-- **Deprecation warnings** before any breaking changes (minimum 1 major version notice)
-- **Migration guides** for major version upgrades
-- **Long-term support** for 1.x (at least 18 months from v1.0.0 release)
-
-### Reporting Issues
-
-- **Bugs**: https://github.com/mathscapes/iterflow/issues
-- **Security**: See [SECURITY.md](SECURITY.md) for responsible disclosure
-- **Feature Requests**: https://github.com/mathscapes/iterflow/discussions
 
 ## License
 

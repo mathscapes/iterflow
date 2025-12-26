@@ -125,8 +125,10 @@ export function pipe<A, B, C, D, E, F, G, H, I, J, K>(
   fn10: (input: J) => K,
 ): (input: A) => K;
 
-export function pipe(...fns: Array<(input: any) => any>): (input: any) => any {
-  return (input: any) => fns.reduce((acc, fn) => fn(acc), input);
+export function pipe<TInput = unknown, TOutput = unknown>(
+  ...fns: Array<(input: unknown) => unknown>
+): (input: TInput) => TOutput {
+  return (input: TInput) => fns.reduce((acc, fn) => fn(acc), input as unknown) as TOutput;
 }
 
 /**
@@ -235,10 +237,10 @@ export function compose<A, B, C, D, E, F, G, H, I, J, K>(
   fn1: (input: A) => B,
 ): (input: A) => K;
 
-export function compose(
-  ...fns: Array<(input: any) => any>
-): (input: any) => any {
-  return (input: any) => fns.reduceRight((acc, fn) => fn(acc), input);
+export function compose<TInput = unknown, TOutput = unknown>(
+  ...fns: Array<(input: unknown) => unknown>
+): (input: TInput) => TOutput {
+  return (input: TInput) => fns.reduceRight((acc, fn) => fn(acc), input as unknown) as TOutput;
 }
 
 /**
@@ -289,11 +291,6 @@ export function compose(
  * Array.from(between5And10([1, 6, 3, 8, 12, 4])); // [6, 8]
  * ```
  */
-export function createOperation<TInput, TOutput>(
-  name: string,
-  generator: (iterable: Iterable<TInput>) => Generator<TOutput>,
-): (iterable: Iterable<TInput>) => IterableIterator<TOutput>;
-
 export function createOperation<TConfig, TInput, TOutput>(
   name: string,
   generator: (
@@ -329,33 +326,25 @@ export function createOperation<TConfig1, TConfig2, TConfig3, TInput, TOutput>(
   config2: TConfig2,
   config3: TConfig3,
 ) => (iterable: Iterable<TInput>) => IterableIterator<TOutput>;
-
 export function createOperation<TInput, TOutput>(
   name: string,
   generator: (
     iterable: Iterable<TInput>,
-    ...configs: any[]
+    ...configs: unknown[]
   ) => Generator<TOutput>,
-): any;
-export function createOperation<TInput, TOutput>(
-  name: string,
-  generator: (
-    iterable: Iterable<TInput>,
-    ...configs: any[]
-  ) => Generator<TOutput>,
-): any {
+): (...configs: unknown[]) => (iterable: Iterable<TInput>) => IterableIterator<TOutput> {
   // Handle operations with no configuration parameters
   if (generator.length === 1) {
-    return (iterable: Iterable<TInput>): IterableIterator<TOutput> => {
+    return ((iterable: Iterable<TInput>): IterableIterator<TOutput> => {
       const result = generator(iterable);
       // Add operation name for debugging
       Object.defineProperty(result, "name", { value: name });
       return result;
-    };
+    }) as unknown as (...configs: unknown[]) => (iterable: Iterable<TInput>) => IterableIterator<TOutput>;
   }
 
   // Handle operations with configuration parameters (curried)
-  return (...configs: any[]) => {
+  return (...configs: unknown[]) => {
     return (iterable: Iterable<TInput>): IterableIterator<TOutput> => {
       const result = generator(iterable, ...configs);
       // Add operation name for debugging
@@ -538,11 +527,14 @@ export function composeTransducers<A, B, C, D, E>(
   xf1: Transducer<A, B>,
 ): Transducer<A, E>;
 
-export function composeTransducers(
-  ...transducers: Array<Transducer<any, any>>
-): Transducer<any, any> {
-  return (reducer: Reducer<any, any>) => {
-    return transducers.reduceRight((acc, xf) => xf(acc), reducer);
+export function composeTransducers<TInput = unknown, TOutput = unknown>(
+  ...transducers: Array<Transducer<unknown, unknown>>
+): Transducer<TInput, TOutput> {
+  return <TResult>(reducer: Reducer<TOutput, TResult>): Reducer<TInput, TResult> => {
+    return transducers.reduceRight(
+      (acc, xf) => xf(acc) as Reducer<unknown, TResult>,
+      reducer as Reducer<unknown, TResult>
+    ) as Reducer<TInput, TResult>;
   };
 }
 
@@ -580,8 +572,8 @@ export function reduced<T>(value: T): Reduced<T> {
  * @param value - The value to check
  * @returns true if the value is reduced
  */
-export function isReduced<T>(value: any): value is Reduced<T> {
-  return value != null && value[REDUCED] === true;
+export function isReduced<T>(value: unknown): value is Reduced<T> {
+  return value != null && (value as Reduced<T>)[REDUCED] === true;
 }
 
 /**

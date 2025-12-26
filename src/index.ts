@@ -226,8 +226,6 @@ export namespace iter {
    * Uses a custom comparator if provided, otherwise uses default < comparison.
    *
    * @template T The type of elements in all iterables
-   * @param iterables - Variable number of sorted iterables to merge
-   * @param compareFn - Optional comparison function (returns negative if a < b, positive if a > b, 0 if equal)
    * @returns A new iterflow with all elements merged in sorted order
    * @example
    * ```typescript

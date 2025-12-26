@@ -622,13 +622,28 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * for sorting. For large datasets, consider using streaming alternatives or limiting data size.
+   *
    * @param this - iterflow instance constrained to numbers
    * @returns The median value, or undefined if the iterator is empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([1, 2, 3, 4, 5]).median(); // 3
    * iter([1, 2, 3, 4]).median(); // 2.5
-   * iter([]).median(); // undefined
+   *
+   * // SAFE: Limit data before median
+   * iter(largeDataset).take(1000).median();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).median(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * iter(largeDataset)
+   *   .chunk(1000)
+   *   .map(chunk => iter(chunk).median())
+   *   .toArray();
    * ```
    */
   median(this: iterflow<number>): number | undefined {
@@ -651,12 +666,28 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * to calculate variance. For large datasets, consider using streaming variance algorithms
+   * or limiting data size.
+   *
    * @param this - iterflow instance constrained to numbers
    * @returns The variance, or undefined if the iterator is empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([1, 2, 3, 4, 5]).variance(); // 2
-   * iter([]).variance(); // undefined
+   *
+   * // SAFE: Limit data before variance
+   * iter(largeDataset).take(10000).variance();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).variance(); // Materializes all records!
+   *
+   * // SAFE: Process in windows
+   * iter(largeDataset)
+   *   .window(1000)
+   *   .map(window => iter(window).variance())
+   *   .toArray();
    * ```
    */
   variance(this: iterflow<number>): number | undefined {
@@ -682,12 +713,28 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * via variance calculation. For large datasets, consider using streaming algorithms
+   * or limiting data size.
+   *
    * @param this - iterflow instance constrained to numbers
    * @returns The standard deviation, or undefined if the iterator is empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([2, 4, 4, 4, 5, 5, 7, 9]).stdDev(); // ~2
-   * iter([]).stdDev(); // undefined
+   *
+   * // SAFE: Limit data before stdDev
+   * iter(largeDataset).take(10000).stdDev();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).stdDev(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * iter(largeDataset)
+   *   .chunk(1000)
+   *   .map(chunk => iter(chunk).stdDev())
+   *   .toArray();
    * ```
    */
   stdDev(this: iterflow<number>): number | undefined {
@@ -701,15 +748,30 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * for sorting. For large datasets, consider using approximate percentile algorithms
+   * or limiting data size.
+   *
    * @param this - iterflow instance constrained to numbers
    * @param p - The percentile to calculate (0-100)
    * @returns The percentile value, or undefined if the iterator is empty
    * @throws {Error} If p is not between 0 and 100
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([1, 2, 3, 4, 5]).percentile(50); // 3 (median)
    * iter([1, 2, 3, 4, 5]).percentile(75); // 4
-   * iter([]).percentile(50); // undefined
+   *
+   * // SAFE: Limit data before percentile
+   * iter(largeDataset).take(10000).percentile(95);
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).percentile(99); // Materializes all records!
+   *
+   * // SAFE: Sample for approximate percentile
+   * iter(largeDataset)
+   *   .filter(() => Math.random() < 0.01) // 1% sample
+   *   .percentile(95);
    * ```
    */
   percentile(this: iterflow<number>, p: number): number | undefined {
@@ -741,13 +803,28 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * to count frequencies. For large datasets with many unique values, memory usage can be significant.
+   *
    * @param this - iterflow instance constrained to numbers
    * @returns An array of the most frequent value(s), or undefined if the iterator is empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([1, 2, 2, 3, 3, 3]).mode(); // [3]
    * iter([1, 1, 2, 2, 3]).mode(); // [1, 2] (bimodal)
-   * iter([]).mode(); // undefined
+   *
+   * // SAFE: Limit data before mode
+   * iter(largeDataset).take(10000).mode();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).mode(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * iter(largeDataset)
+   *   .chunk(1000)
+   *   .map(chunk => iter(chunk).mode())
+   *   .toArray();
    * ```
    */
   mode(this: iterflow<number>): number[] | undefined {
@@ -779,13 +856,28 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire iterator into memory
+   * for sorting and percentile calculation. For large datasets, consider using streaming
+   * quantile algorithms or limiting data size.
+   *
    * @param this - iterflow instance constrained to numbers
    * @returns An object with Q1, Q2, and Q3 values, or undefined if the iterator is empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * iter([1, 2, 3, 4, 5, 6, 7, 8, 9]).quartiles();
    * // { Q1: 3, Q2: 5, Q3: 7 }
-   * iter([]).quartiles(); // undefined
+   *
+   * // SAFE: Limit data before quartiles
+   * iter(largeDataset).take(10000).quartiles();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * iter(millionRecords).quartiles(); // Materializes all records!
+   *
+   * // SAFE: Sample for approximate quartiles
+   * iter(largeDataset)
+   *   .filter(() => Math.random() < 0.01) // 1% sample
+   *   .quartiles();
    * ```
    */
   quartiles(
@@ -879,13 +971,34 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes both iterators into memory
+   * to calculate covariance. For large datasets, this doubles memory usage.
+   *
    * @param this - iterflow instance constrained to numbers
    * @param other - An iterable of numbers to compare with
    * @returns The covariance, or undefined if either sequence is empty or sequences have different lengths
    * @example
    * ```typescript
+   * // SAFE: Small datasets
    * iter([1, 2, 3, 4, 5]).covariance([2, 4, 6, 8, 10]); // 4
-   * iter([]).covariance([1, 2, 3]); // undefined
+   *
+   * // SAFE: Limit both sequences
+   * iter(largeDataset1).take(10000).covariance(
+   *   iter(largeDataset2).take(10000).toArray()
+   * );
+   *
+   * // UNSAFE: Large datasets may cause memory issues
+   * iter(millionRecords1).covariance(millionRecords2); // Materializes both!
+   *
+   * // SAFE: Process in windows
+   * iter(largeDataset1)
+   *   .window(1000)
+   *   .map((window, i) =>
+   *     iter(window).covariance(
+   *       iter(largeDataset2).drop(i * 1000).take(1000).toArray()
+   *     )
+   *   )
+   *   .toArray();
    * ```
    */
   covariance(
@@ -921,14 +1034,32 @@ export class iterflow<T> implements Iterable<T> {
    * This method is only available when T is number.
    * This is a terminal operation that consumes the iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes both iterators into memory
+   * to calculate correlation. For large datasets, this doubles memory usage.
+   *
    * @param this - iterflow instance constrained to numbers
    * @param other - An iterable of numbers to compare with
    * @returns The correlation coefficient, or undefined if either sequence is empty or sequences have different lengths
    * @example
    * ```typescript
-   * iter([1, 2, 3, 4, 5]).correlation([2, 4, 6, 8, 10]); // 1 (perfect positive correlation)
-   * iter([1, 2, 3]).correlation([3, 2, 1]); // -1 (perfect negative correlation)
-   * iter([]).correlation([1, 2, 3]); // undefined
+   * // SAFE: Small datasets
+   * iter([1, 2, 3, 4, 5]).correlation([2, 4, 6, 8, 10]); // 1 (perfect positive)
+   * iter([1, 2, 3]).correlation([3, 2, 1]); // -1 (perfect negative)
+   *
+   * // SAFE: Limit both sequences
+   * iter(largeDataset1).take(10000).correlation(
+   *   iter(largeDataset2).take(10000).toArray()
+   * );
+   *
+   * // UNSAFE: Large datasets may cause memory issues
+   * iter(millionRecords1).correlation(millionRecords2); // Materializes both!
+   *
+   * // SAFE: Sample for approximate correlation
+   * iter(largeDataset1)
+   *   .filter(() => Math.random() < 0.01)
+   *   .correlation(
+   *     iter(largeDataset2).filter(() => Math.random() < 0.01).toArray()
+   *   );
    * ```
    */
   correlation(
