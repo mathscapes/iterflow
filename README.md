@@ -9,7 +9,6 @@ Iterator utilities for ES2022+ with statistical operations, windowing, and lazy 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6%2B-blue)](https://www.typescriptlang.org/)
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-blue.svg)](https://unlicense.org/)
 
-
 ## Installation
 
 ```bash
@@ -124,16 +123,61 @@ iter([1, 2, 3, 4, 5])
 ### Functional API (Better tree-shaking)
 
 ```typescript
-import { pipe, filter, map, sum } from 'iterflow/fn';
+const temperatures = [20, 22, 25, 23, 21, 19, 18, 20, 22, 24];
 
-const process = pipe(
-  filter((x: number) => x % 2 === 0),
-  map((x: number) => x * 2),
-  sum
-);
-
-process([1, 2, 3, 4, 5]);  // 12
+const movingAverages = iter(temperatures)
+  .window(3)
+  .map(window => iter(window).mean())
+  .toArray();
 ```
+
+## When to Use iterflow
+
+iterflow balances developer experience with performance. Here's how to decide:
+
+### Use iterflow when:
+
+- **Large datasets** (1000+ items) - lazy evaluation avoids unnecessary work
+- **Early termination** - finding first match, taking limited results (find, some, every, take)
+- **Memory efficiency** - windowing, chunking, or processing huge files
+- **Complex pipelines** - chaining 3+ operations together
+- **Statistical operations** - mean, median, variance, percentile calculations
+- **Code readability** - method chaining feels more natural than manual loops
+
+### Consider alternatives when:
+
+- **Small arrays** (< 100 items) - native Array methods are slightly faster
+- **Single simple operation** - map or filter alone on small data
+- **Performance-critical hot paths** - called millions of times, every microsecond matters
+- **Need multiple iterations** - arrays are easier to loop over multiple times
+
+### The Trade-off
+
+iterflow uses lazy evaluation, which means:
+- **Lower memory usage** - no intermediate arrays created
+- **Slightly slower per operation** - small function call overhead
+- **Better for large datasets** - memory savings far exceed speed cost
+- **Better for partial consumption** - stops early when possible
+
+### Real Performance Impact
+
+For datasets < 100 items, the differences are negligible—use what feels natural.
+
+For datasets > 1000 items:
+- **With early termination** (take 10 from 100K): iterflow can be 20-300x faster
+- **With windowing** (moving average): iterflow can be 35-600x faster due to memory efficiency
+- **Full consumption** (process all items): native arrays are 2-5x faster
+
+See **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)** for detailed performance data and specific operation comparisons.
+
+## Documentation
+
+- **[FAQ](FAQ.md)** - Frequently asked questions, common patterns, and troubleshooting
+- **[Examples](examples/)** - Real-world usage examples
+- **[Memory Safety Guide](docs/guides/memory-safety.md)** - Avoiding memory leaks and efficient memory usage
+- **[Performance Guide](docs/PERFORMANCE.md)** - Optimization techniques and benchmarking
+- **[Benchmarking Guide](docs/BENCHMARKING.md)** - Running and interpreting benchmarks
+- **[SECURITY.md](SECURITY.md)** - Security best practices and vulnerability reporting
 
 ## Contributing
 
@@ -143,6 +187,8 @@ Quick start:
 2. Create a feature branch from `dev`
 3. Make your changes with tests
 4. Submit a PR to `dev`
+
+See [PLAYBOOK.md](PLAYBOOK.md) for complete details.
 
 ## License
 
