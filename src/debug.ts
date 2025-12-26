@@ -30,6 +30,8 @@ export interface DebugConfig {
 
 /**
  * Global debug state
+ *
+ * @internal Private implementation detail - use exported debug functions instead
  */
 class DebugState {
   private config: DebugConfig = {
@@ -242,6 +244,24 @@ export function getDebugConfig(): Readonly<DebugConfig> {
 
 /**
  * Add a trace entry
+ *
+ * Manually records an operation trace entry for debugging purposes.
+ * Traces are only recorded when debug mode is enabled with traceOperations: true.
+ *
+ * @param entry - The trace entry to add
+ * @example
+ * ```typescript
+ * import { enableDebug, addTrace } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * addTrace({
+ *   operation: 'customOp',
+ *   timestamp: Date.now(),
+ *   duration: 42.5,
+ *   metadata: { itemsProcessed: 100 }
+ * });
+ * ```
  */
 export function addTrace(entry: TraceEntry): void {
   debugState.trace(entry);
@@ -249,6 +269,24 @@ export function addTrace(entry: TraceEntry): void {
 
 /**
  * Get all trace entries
+ *
+ * Retrieves all recorded trace entries for analysis. Each trace entry contains
+ * operation name, timestamp, duration, and optional input/output/error data.
+ *
+ * @returns An immutable array of all trace entries
+ * @example
+ * ```typescript
+ * import { from, enableDebug, getTraces } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true, traceInput: true, traceOutput: true });
+ *
+ * from([1, 2, 3]).map(x => x * 2).toArray();
+ *
+ * const traces = getTraces();
+ * traces.forEach(trace => {
+ *   console.log(`${trace.operation} took ${trace.duration}ms`);
+ * });
+ * ```
  */
 export function getTraces(): readonly TraceEntry[] {
   return debugState.getTraces();
@@ -256,6 +294,23 @@ export function getTraces(): readonly TraceEntry[] {
 
 /**
  * Clear all traces
+ *
+ * Removes all recorded trace entries from memory. Useful for resetting debug state
+ * between test runs or freeing memory after analyzing traces.
+ *
+ * @example
+ * ```typescript
+ * import { enableDebug, getTraces, clearTraces } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * // ... run some operations ...
+ *
+ * const traces = getTraces();
+ * analyzePerformance(traces);
+ *
+ * clearTraces(); // Reset for next benchmark
+ * ```
  */
 export function clearTraces(): void {
   debugState.clearTraces();
@@ -263,6 +318,26 @@ export function clearTraces(): void {
 
 /**
  * Get traces for a specific operation
+ *
+ * Filters trace entries to return only those for the specified operation name.
+ * Useful for analyzing performance of a specific method or transformation.
+ *
+ * @param operation - The operation name to filter by (e.g., "map", "filter")
+ * @returns An array of trace entries for the specified operation
+ * @example
+ * ```typescript
+ * import { from, enableDebug, getTracesForOperation } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * from([1, 2, 3])
+ *   .map(x => x * 2)
+ *   .filter(x => x > 3)
+ *   .toArray();
+ *
+ * const mapTraces = getTracesForOperation('map');
+ * console.log(`map was called ${mapTraces.length} times`);
+ * ```
  */
 export function getTracesForOperation(operation: string): TraceEntry[] {
   return debugState.getTracesForOperation(operation);
@@ -270,6 +345,31 @@ export function getTracesForOperation(operation: string): TraceEntry[] {
 
 /**
  * Get trace summary statistics
+ *
+ * Computes aggregated statistics for each operation including call count,
+ * average duration, and error count. Useful for identifying performance
+ * bottlenecks and error-prone operations.
+ *
+ * @returns An object mapping operation names to their statistics
+ * @example
+ * ```typescript
+ * import { from, enableDebug, getTraceSummary } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * from([1, 2, 3, 4, 5])
+ *   .map(x => x * 2)
+ *   .filter(x => x > 5)
+ *   .toArray();
+ *
+ * const summary = getTraceSummary();
+ * Object.entries(summary).forEach(([op, stats]) => {
+ *   console.log(`${op}: ${stats.count} calls, avg ${stats.avgDuration.toFixed(2)}ms`);
+ * });
+ * // Output:
+ * // map: 5 calls, avg 0.02ms
+ * // filter: 5 calls, avg 0.01ms
+ * ```
  */
 export function getTraceSummary(): Record<
   string,
@@ -280,6 +380,31 @@ export function getTraceSummary(): Record<
 
 /**
  * Wrapper function to trace operation execution
+ *
+ * Wraps a synchronous function to automatically record execution timing and errors.
+ * Only records traces when debug mode is enabled.
+ *
+ * @template T - The function's return type
+ * @param operation - The operation name for the trace entry
+ * @param fn - The function to execute and trace
+ * @param metadata - Optional metadata to include in the trace entry
+ * @returns The result of executing fn
+ * @example
+ * ```typescript
+ * import { enableDebug, traceOperation } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * const result = traceOperation(
+ *   'computeExpensive',
+ *   () => {
+ *     let sum = 0;
+ *     for (let i = 0; i < 1000000; i++) sum += i;
+ *     return sum;
+ *   },
+ *   { iterations: 1000000 }
+ * );
+ * ```
  */
 export function traceOperation<T>(
   operation: string,
@@ -323,6 +448,30 @@ export function traceOperation<T>(
 
 /**
  * Async version of traceOperation
+ *
+ * Wraps an async function to automatically record execution timing and errors.
+ * Only records traces when debug mode is enabled.
+ *
+ * @template T - The function's return type
+ * @param operation - The operation name for the trace entry
+ * @param fn - The async function to execute and trace
+ * @param metadata - Optional metadata to include in the trace entry
+ * @returns A promise resolving to the result of executing fn
+ * @example
+ * ```typescript
+ * import { enableDebug, traceOperationAsync } from 'iterflow';
+ *
+ * enableDebug({ traceOperations: true });
+ *
+ * const data = await traceOperationAsync(
+ *   'fetchUserData',
+ *   async () => {
+ *     const response = await fetch('/api/users');
+ *     return response.json();
+ *   },
+ *   { endpoint: '/api/users' }
+ * );
+ * ```
  */
 export async function traceOperationAsync<T>(
   operation: string,

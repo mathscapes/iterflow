@@ -5,6 +5,18 @@
 
 /**
  * Base error class for all iterflow errors
+ *
+ * Provides a foundation for all library-specific errors with additional context
+ * including the operation name and custom metadata for debugging.
+ *
+ * @example
+ * ```typescript
+ * throw new iterflowError(
+ *   "Invalid configuration",
+ *   "setupStream",
+ *   { config: { timeout: -1 } }
+ * );
+ * ```
  */
 export class iterflowError extends Error {
   public readonly operation?: string;
@@ -28,6 +40,26 @@ export class iterflowError extends Error {
 
   /**
    * Returns a detailed error message with context
+   *
+   * Formats the error as a multi-line string including operation name, context data,
+   * and stack trace for comprehensive debugging information.
+   *
+   * @returns A formatted string containing all error details
+   * @example
+   * ```typescript
+   * const error = new iterflowError(
+   *   "Processing failed",
+   *   "transform",
+   *   { index: 42, value: null }
+   * );
+   * console.log(error.toDetailedString());
+   * // iterflowError: Processing failed
+   * //   Operation: transform
+   * //   Context:
+   * //     index: 42
+   * //     value: null
+   * //   Stack: ...
+   * ```
    */
   toDetailedString(): string {
     let msg = `${this.name}: ${this.message}`;
@@ -53,6 +85,19 @@ export class iterflowError extends Error {
 
 /**
  * Error thrown when operation parameters are invalid
+ *
+ * Indicates that input validation failed due to incorrect parameter types,
+ * out-of-range values, or other constraint violations.
+ *
+ * @example
+ * ```typescript
+ * // Thrown when validating a negative value that must be positive
+ * throw new ValidationError(
+ *   "count must be positive, got -5",
+ *   "take",
+ *   { paramName: "count", value: -5 }
+ * );
+ * ```
  */
 export class ValidationError extends iterflowError {
   constructor(
@@ -67,6 +112,23 @@ export class ValidationError extends iterflowError {
 
 /**
  * Error thrown when an operation fails during execution
+ *
+ * Wraps underlying errors that occur during stream processing or transformations,
+ * preserving the original error as the cause while adding operation context.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await processItem(item);
+ * } catch (error) {
+ *   throw new OperationError(
+ *     "Failed to process item",
+ *     "map",
+ *     error as Error,
+ *     { item, index: 5 }
+ *   );
+ * }
+ * ```
  */
 export class OperationError extends iterflowError {
   public readonly cause?: Error;
@@ -82,6 +144,28 @@ export class OperationError extends iterflowError {
     this.cause = cause;
   }
 
+  /**
+   * Returns a detailed error message including the original cause
+   *
+   * Extends the base toDetailedString() to include information about the
+   * underlying error that caused this operation to fail.
+   *
+   * @returns A formatted string with operation details and cause information
+   * @example
+   * ```typescript
+   * const originalError = new Error("Network timeout");
+   * const opError = new OperationError(
+   *   "Failed to fetch data",
+   *   "fetchAsync",
+   *   originalError
+   * );
+   * console.log(opError.toDetailedString());
+   * // OperationError: Failed to fetch data
+   * //   Operation: fetchAsync
+   * //   Caused by: Network timeout
+   * //   [stack traces...]
+   * ```
+   */
   toDetailedString(): string {
     let msg = super.toDetailedString();
 
@@ -98,6 +182,22 @@ export class OperationError extends iterflowError {
 
 /**
  * Error thrown when an operation requires a non-empty sequence
+ *
+ * Indicates that an operation like first(), last(), or min() was called on an
+ * empty iterable where at least one element is required to produce a result.
+ *
+ * @example
+ * ```typescript
+ * import { from } from 'iterflow';
+ *
+ * const empty = from([]);
+ * try {
+ *   empty.first(); // Throws EmptySequenceError
+ * } catch (error) {
+ *   console.error(error.message);
+ *   // "Operation 'first' requires a non-empty sequence"
+ * }
+ * ```
  */
 export class EmptySequenceError extends iterflowError {
   constructor(operation: string, message?: string) {
@@ -111,6 +211,22 @@ export class EmptySequenceError extends iterflowError {
 
 /**
  * Error thrown when accessing an invalid index
+ *
+ * Indicates that an index-based operation attempted to access an element
+ * outside the valid range of the collection (negative index or index >= size).
+ *
+ * @example
+ * ```typescript
+ * import { from } from 'iterflow';
+ *
+ * const items = from([1, 2, 3]);
+ * try {
+ *   items.elementAt(10); // Only 3 elements, index 10 is out of bounds
+ * } catch (error) {
+ *   console.error(error.message);
+ *   // "Index 10 is out of bounds (size: 3)"
+ * }
+ * ```
  */
 export class IndexOutOfBoundsError extends iterflowError {
   public readonly index: number;
@@ -130,6 +246,21 @@ export class IndexOutOfBoundsError extends iterflowError {
 
 /**
  * Error thrown when a type conversion or coercion fails
+ *
+ * Indicates that an attempt to convert a value to a specific type failed,
+ * such as converting a non-numeric string to a number or a decimal to an integer.
+ *
+ * @example
+ * ```typescript
+ * import { toNumber } from 'iterflow';
+ *
+ * try {
+ *   const num = toNumber("not-a-number");
+ * } catch (error) {
+ *   console.error(error.message);
+ *   // 'Cannot convert value "not-a-number" to type number'
+ * }
+ * ```
  */
 export class TypeConversionError extends iterflowError {
   public readonly value: unknown;
@@ -149,6 +280,28 @@ export class TypeConversionError extends iterflowError {
 
 /**
  * Error thrown when an operation exceeds its timeout duration
+ *
+ * Indicates that an async operation took longer than the specified timeout
+ * and was terminated to prevent indefinite waiting.
+ *
+ * @example
+ * ```typescript
+ * import { fromAsync } from 'iterflow';
+ *
+ * async function* slowGenerator() {
+ *   yield await new Promise(resolve => setTimeout(() => resolve(1), 5000));
+ * }
+ *
+ * try {
+ *   // Timeout after 1 second
+ *   await fromAsync(slowGenerator())
+ *     .withTimeout(1000)
+ *     .toArray();
+ * } catch (error) {
+ *   console.error(error.message);
+ *   // "Operation timed out after 1000ms"
+ * }
+ * ```
  */
 export class TimeoutError extends iterflowError {
   public readonly timeoutMs: number;
@@ -166,6 +319,27 @@ export class TimeoutError extends iterflowError {
 
 /**
  * Error thrown when an operation is aborted via AbortSignal
+ *
+ * Indicates that an async operation was cancelled using an AbortController,
+ * typically for user-initiated cancellation or cleanup during component unmounting.
+ *
+ * @example
+ * ```typescript
+ * import { fromAsync } from 'iterflow';
+ *
+ * const controller = new AbortController();
+ *
+ * setTimeout(() => controller.abort("User cancelled"), 1000);
+ *
+ * try {
+ *   await fromAsync(longRunningGenerator())
+ *     .withAbortSignal(controller.signal)
+ *     .toArray();
+ * } catch (error) {
+ *   console.error(error.message);
+ *   // "Operation aborted: User cancelled"
+ * }
+ * ```
  */
 export class AbortError extends iterflowError {
   public readonly reason?: string;

@@ -24,6 +24,7 @@ Perfect for getting started with iterflow:
 - **moving-average.ts** - Windowing and sliding window calculations
 - **fibonacci.ts** - Lazy evaluation with infinite generators
 - **chaining.ts** - Method chaining and composition patterns
+- **resource-limits.ts** - Production safety features (limit, timeout, withSignal) [v0.8.0+]
 
 ## Dependencies
 
@@ -42,6 +43,7 @@ Recommended order for learning iterflow:
 2. **chaining.ts** - Learn method composition and chaining
 3. **moving-average.ts** - Understand windowing operations
 4. **fibonacci.ts** - Master lazy evaluation with infinite sequences
+5. **resource-limits.ts** - Production safety (limit, timeout, withSignal, error handling)
 
 ## Example Highlights
 

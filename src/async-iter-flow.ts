@@ -1,5 +1,5 @@
 import { validateRange, validatePositiveInteger, validateNonZero } from "./validation.js";
-import { TimeoutError, AbortError } from "./errors.js";
+import { TimeoutError, AbortError, OperationError } from "./errors.js";
 
 /**
  * A fluent interface wrapper for working with async iterators and async iterables.
@@ -146,6 +146,47 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
             continue;
           }
           yield value;
+        }
+      },
+    });
+  }
+
+  /**
+   * Limits the maximum number of iterations to prevent infinite loops.
+   * Unlike `take()` which silently stops at the limit, this method throws
+   * an OperationError if the limit is exceeded, making infinite loops explicit.
+   *
+   * @param maxIterations - Maximum number of iterations allowed (must be at least 1)
+   * @returns A new async iterflow that will throw if limit is exceeded
+   * @throws {ValidationError} If maxIterations is not a positive integer
+   * @throws {OperationError} If iteration count exceeds maxIterations
+   * @example
+   * ```typescript
+   * // Safely process potentially infinite async iterator
+   * await asyncIter.range(Infinity).limit(1000).toArray(); // Throws after 1000 iterations
+   *
+   * // Regular finite iterator works normally
+   * await asyncIter([1, 2, 3]).limit(10).toArray(); // [1, 2, 3]
+   * ```
+   */
+  limit(maxIterations: number): Asynciterflow<T> {
+    validatePositiveInteger(maxIterations, "maxIterations", "limit");
+
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        let count = 0;
+        for await (const value of self) {
+          if (count >= maxIterations) {
+            throw new OperationError(
+              `Iterator exceeded limit of ${maxIterations} iterations`,
+              "limit",
+              undefined,
+              { maxIterations },
+            );
+          }
+          yield value;
+          count++;
         }
       },
     });
@@ -524,11 +565,27 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the median value of all numeric elements.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * for sorting. For large datasets, consider using streaming alternatives or limiting data size.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @returns A promise of the median value, or undefined if empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([1, 2, 3, 4, 5]).median(); // 3
+   *
+   * // SAFE: Limit data before median
+   * await asyncIter(largeAsyncDataset).take(1000).median();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).median(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * await asyncIter(largeAsyncDataset)
+   *   .chunk(1000)
+   *   .map(async chunk => await asyncIter(chunk).median())
+   *   .toArray();
    * ```
    */
   async median(this: Asynciterflow<number>): Promise<number | undefined> {
@@ -549,11 +606,28 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the variance of all numeric elements.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * to calculate variance. For large datasets, consider using streaming variance algorithms
+   * or limiting data size.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @returns A promise of the variance, or undefined if empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([1, 2, 3, 4, 5]).variance(); // 2
+   *
+   * // SAFE: Limit data before variance
+   * await asyncIter(largeAsyncDataset).take(10000).variance();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).variance(); // Materializes all records!
+   *
+   * // SAFE: Process in windows
+   * await asyncIter(largeAsyncDataset)
+   *   .window(1000)
+   *   .map(async window => await asyncIter(window).variance())
+   *   .toArray();
    * ```
    */
   async variance(this: Asynciterflow<number>): Promise<number | undefined> {
@@ -576,11 +650,28 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the standard deviation of all numeric elements.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * via variance calculation. For large datasets, consider using streaming algorithms
+   * or limiting data size.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @returns A promise of the standard deviation, or undefined if empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([2, 4, 4, 4, 5, 5, 7, 9]).stdDev(); // ~2
+   *
+   * // SAFE: Limit data before stdDev
+   * await asyncIter(largeAsyncDataset).take(10000).stdDev();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).stdDev(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * await asyncIter(largeAsyncDataset)
+   *   .chunk(1000)
+   *   .map(async chunk => await asyncIter(chunk).stdDev())
+   *   .toArray();
    * ```
    */
   async stdDev(this: Asynciterflow<number>): Promise<number | undefined> {
@@ -592,13 +683,29 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the specified percentile of all numeric elements.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * for sorting. For large datasets, consider using approximate percentile algorithms
+   * or limiting data size.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @param p - The percentile to calculate (0-100)
    * @returns A promise of the percentile value, or undefined if empty
    * @throws {Error} If p is not between 0 and 100
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([1, 2, 3, 4, 5]).percentile(50); // 3
+   *
+   * // SAFE: Limit data before percentile
+   * await asyncIter(largeAsyncDataset).take(10000).percentile(95);
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).percentile(99); // Materializes all records!
+   *
+   * // SAFE: Sample for approximate percentile
+   * await asyncIter(largeAsyncDataset)
+   *   .filter(async () => Math.random() < 0.01) // 1% sample
+   *   .percentile(95);
    * ```
    */
   async percentile(
@@ -613,7 +720,7 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
     values.sort((a, b) => a - b);
 
     if (p === 0) return values[0]!;
-    if (p === 100) return values[values.length - 1]!
+    if (p === 100) return values[values.length - 1]!;
 
     const index = (p / 100) * (values.length - 1);
     const lower = Math.floor(index);
@@ -631,11 +738,27 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Finds the most frequent value(s) in the dataset.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * to count frequencies. For large datasets with many unique values, memory usage can be significant.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @returns A promise of an array of the most frequent value(s), or undefined if empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([1, 2, 2, 3, 3, 3]).mode(); // [3]
+   *
+   * // SAFE: Limit data before mode
+   * await asyncIter(largeAsyncDataset).take(10000).mode();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).mode(); // Materializes all records!
+   *
+   * // SAFE: Process in chunks
+   * await asyncIter(largeAsyncDataset)
+   *   .chunk(1000)
+   *   .map(async chunk => await asyncIter(chunk).mode())
+   *   .toArray();
    * ```
    */
   async mode(this: Asynciterflow<number>): Promise<number[] | undefined> {
@@ -665,12 +788,28 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the quartiles (Q1, Q2, Q3) of all numeric elements.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes the entire async iterator into memory
+   * for sorting and percentile calculation. For large datasets, consider using streaming
+   * quantile algorithms or limiting data size.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @returns A promise of an object with Q1, Q2, and Q3 values, or undefined if empty
    * @example
    * ```typescript
+   * // SAFE: Small dataset
    * await asyncIter([1, 2, 3, 4, 5, 6, 7, 8, 9]).quartiles();
    * // { Q1: 3, Q2: 5, Q3: 7 }
+   *
+   * // SAFE: Limit data before quartiles
+   * await asyncIter(largeAsyncDataset).take(10000).quartiles();
+   *
+   * // UNSAFE: Large dataset may cause memory issues
+   * await asyncIter(millionRecords).quartiles(); // Materializes all records!
+   *
+   * // SAFE: Sample for approximate quartiles
+   * await asyncIter(largeAsyncDataset)
+   *   .filter(async () => Math.random() < 0.01) // 1% sample
+   *   .quartiles();
    * ```
    */
   async quartiles(
@@ -756,12 +895,34 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the covariance between two numeric sequences.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes both async iterators into memory
+   * to calculate covariance. For large datasets, this doubles memory usage.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @param other - An async iterable of numbers to compare with
    * @returns A promise of the covariance, or undefined if sequences are empty or have different lengths
    * @example
    * ```typescript
+   * // SAFE: Small datasets
    * await asyncIter([1, 2, 3, 4, 5]).covariance([2, 4, 6, 8, 10]); // 4
+   *
+   * // SAFE: Limit both sequences
+   * await asyncIter(largeAsyncDataset1).take(10000).covariance(
+   *   await asyncIter(largeAsyncDataset2).take(10000).toArray()
+   * );
+   *
+   * // UNSAFE: Large datasets may cause memory issues
+   * await asyncIter(millionRecords1).covariance(millionRecords2); // Materializes both!
+   *
+   * // SAFE: Process in windows
+   * await asyncIter(largeAsyncDataset1)
+   *   .window(1000)
+   *   .map(async (window, i) =>
+   *     await asyncIter(window).covariance(
+   *       await asyncIter(largeAsyncDataset2).drop(i * 1000).take(1000).toArray()
+   *     )
+   *   )
+   *   .toArray();
    * ```
    */
   async covariance(
@@ -804,12 +965,33 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
    * Calculates the Pearson correlation coefficient between two numeric sequences.
    * This is a terminal operation that consumes the async iterator.
    *
+   * WARNING - Memory Intensive: This operation eagerly materializes both async iterators into memory
+   * to calculate correlation. For large datasets, this doubles memory usage.
+   *
    * @param this - async iterflow instance constrained to numbers
    * @param other - An async iterable of numbers to compare with
    * @returns A promise of the correlation coefficient, or undefined if sequences are empty or have different lengths
    * @example
    * ```typescript
+   * // SAFE: Small datasets
    * await asyncIter([1, 2, 3, 4, 5]).correlation([2, 4, 6, 8, 10]); // 1
+   *
+   * // SAFE: Limit both sequences
+   * await asyncIter(largeAsyncDataset1).take(10000).correlation(
+   *   await asyncIter(largeAsyncDataset2).take(10000).toArray()
+   * );
+   *
+   * // UNSAFE: Large datasets may cause memory issues
+   * await asyncIter(millionRecords1).correlation(millionRecords2); // Materializes both!
+   *
+   * // SAFE: Sample for approximate correlation
+   * await asyncIter(largeAsyncDataset1)
+   *   .filter(async () => Math.random() < 0.01)
+   *   .correlation(
+   *     await asyncIter(largeAsyncDataset2)
+   *       .filter(async () => Math.random() < 0.01)
+   *       .toArray()
+   *   );
    * ```
    */
   async correlation(
@@ -1964,6 +2146,158 @@ export class Asynciterflow<T> implements AsyncIterable<T> {
         } finally {
           // Clean up event listener
           signal.removeEventListener("abort", abortHandler);
+        }
+      },
+    });
+  }
+
+  /**
+   * Interleaves elements from this async iterator with elements from other async/sync iterables.
+   * Takes one element from each iterable in round-robin fashion.
+   *
+   * @param others - Variable number of async/sync iterables to interleave with
+   * @returns A new async iterflow with elements from all iterables interleaved
+   * @example
+   * ```typescript
+   * await asyncIter([1, 2, 3]).interleave([4, 5, 6]).toArray(); // [1, 4, 2, 5, 3, 6]
+   * ```
+   */
+  interleave(...others: Array<AsyncIterable<T> | Iterable<T>>): Asynciterflow<T> {
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        const allIterables = [self, ...others];
+        if (allIterables.length === 0) return;
+
+        const iterators = allIterables.map((it) =>
+          Symbol.asyncIterator in it
+            ? it[Symbol.asyncIterator]()
+            : (async function* () {
+                yield* it as Iterable<T>;
+              })(),
+        );
+        const active = new Set(iterators);
+
+        while (active.size > 0) {
+          for (const iterator of iterators) {
+            if (!active.has(iterator)) continue;
+
+            const result = await iterator.next();
+            if (result.done) {
+              active.delete(iterator);
+            } else {
+              yield result.value;
+            }
+          }
+        }
+      },
+    });
+  }
+
+  /**
+   * Merges this async iterator with other sorted async/sync iterables into a single sorted async iterator.
+   * Assumes all input iterables are already sorted in ascending order.
+   *
+   * @param others - Variable number of sorted async/sync iterables to merge with
+   * @returns A new async iterflow with all elements merged in sorted order
+   * @example
+   * ```typescript
+   * await asyncIter([1, 3, 5]).merge([2, 4, 6]).toArray(); // [1, 2, 3, 4, 5, 6]
+   * ```
+   */
+  merge(...others: Array<AsyncIterable<T> | Iterable<T>>): Asynciterflow<T> {
+    const self = this;
+    return new Asynciterflow({
+      async *[Symbol.asyncIterator]() {
+        const allIterables = [self, ...others];
+        if (allIterables.length === 0) return;
+
+        // Default comparator for numbers/strings
+        const compareFn = (a: T, b: T) => {
+          if (a < b) return -1;
+          if (a > b) return 1;
+          return 0;
+        };
+
+        // Initialize all iterators with their first value
+        const heap: Array<{
+          value: T;
+          iterator: AsyncIterator<T>;
+          index: number;
+        }> = [];
+
+        for (let i = 0; i < allIterables.length; i++) {
+          const iterable = allIterables[i]!;
+          const iterator =
+            Symbol.asyncIterator in iterable
+              ? iterable[Symbol.asyncIterator]()
+              : (async function* () {
+                  yield* iterable as Iterable<T>;
+                })();
+
+          const result = await iterator.next();
+          if (!result.done) {
+            heap.push({ value: result.value, iterator, index: i });
+          }
+        }
+
+        // Helper to maintain min-heap property
+        const bubbleDown = (index: number) => {
+          const length = heap.length;
+          while (true) {
+            let smallest = index;
+            const leftChild = 2 * index + 1;
+            const rightChild = 2 * index + 2;
+
+            if (
+              leftChild < length &&
+              compareFn(heap[leftChild]!.value, heap[smallest]!.value) < 0
+            ) {
+              smallest = leftChild;
+            }
+
+            if (
+              rightChild < length &&
+              compareFn(heap[rightChild]!.value, heap[smallest]!.value) < 0
+            ) {
+              smallest = rightChild;
+            }
+
+            if (smallest === index) break;
+
+            // Swap elements
+            const temp = heap[index]!;
+            heap[index] = heap[smallest]!;
+            heap[smallest] = temp;
+            index = smallest;
+          }
+        };
+
+        // Build initial heap
+        for (let i = Math.floor(heap.length / 2) - 1; i >= 0; i--) {
+          bubbleDown(i);
+        }
+
+        // Main merge loop
+        while (heap.length > 0) {
+          // Get minimum element
+          const min = heap[0]!;
+          yield min.value;
+
+          // Get next value from the same iterator
+          const nextResult = await min.iterator.next();
+          if (nextResult.done) {
+            // Remove this iterator from heap
+            heap[0] = heap[heap.length - 1]!;
+            heap.pop();
+            if (heap.length > 0) {
+              bubbleDown(0);
+            }
+          } else {
+            // Update heap with new value
+            heap[0] = { value: nextResult.value, iterator: min.iterator, index: min.index };
+            bubbleDown(0);
+          }
         }
       },
     });

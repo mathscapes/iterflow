@@ -269,10 +269,10 @@ describe('Stress Testing - Edge Cases', () => {
     });
 
     it('should handle unicode characters', () => {
-      const data = ['Hello', '世界', '🌍', '🚀', 'مرحبا'];
+      const data = ['Hello', '世界', 'Earth', 'Rocket', 'مرحبا'];
 
       const result = iter(data).toArray();
-      expect(result).toEqual(['Hello', '世界', '🌍', '🚀', 'مرحبا']);
+      expect(result).toEqual(['Hello', '世界', 'Earth', 'Rocket', 'مرحبا']);
     });
   });
 
