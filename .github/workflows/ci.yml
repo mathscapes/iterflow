@@ -33,6 +33,9 @@ jobs:
     - name: Run tests
       run: npm test
 
+    - name: Build for type tests
+      run: npm run build
+
     - name: Run type tests
       run: npm run test:types
 
