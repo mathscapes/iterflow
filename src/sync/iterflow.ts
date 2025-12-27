@@ -1,5 +1,7 @@
-import { validateRange, validatePositiveInteger } from "./validation.js";
-import { OperationError } from "./errors.js";
+import { validatePositiveInteger } from "../validation.js";
+import { OperationError } from "../errors.js";
+import * as stats from "./statistics.js";
+import * as windowing from "./windowing.js";
 
 /**
  * A fluent interface wrapper for working with iterators and iterables.
@@ -533,18 +535,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   sum(this: iterflow<number>): number {
-    if (this._sourceArray) {
-      let total = 0;
-      for (let i = 0; i < this._sourceArray.length; i++) {
-        total += this._sourceArray[i]!;
-      }
-      return total;
-    }
-    let total = 0;
-    for (const value of this) {
-      total += value;
-    }
-    return total;
+    return stats.sum(this);
   }
 
   /**
@@ -561,13 +552,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   mean(this: iterflow<number>): number | undefined {
-    let total = 0;
-    let count = 0;
-    for (const value of this) {
-      total += value;
-      count++;
-    }
-    return count === 0 ? undefined : total / count;
+    return stats.mean(this);
   }
 
   /**
@@ -647,17 +632,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   median(this: iterflow<number>): number | undefined {
-    const values = this._sourceArray || this.toArray();
-    if (values.length === 0) return undefined;
-
-    const sorted = values.slice().sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-
-    if (sorted.length % 2 === 0) {
-      return (sorted[mid - 1]! + sorted[mid]!) / 2;
-    } else {
-      return sorted[mid]!;
-    }
+    return stats.median(this);
   }
 
   /**
@@ -691,20 +666,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   variance(this: iterflow<number>): number | undefined {
-    const values = this._sourceArray || this.toArray();
-    if (values.length === 0) return undefined;
-
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-
-    // Optimize: calculate sum of squared differences in single pass without intermediate array
-    let sumSquaredDiffs = 0;
-    for (let i = 0; i < values.length; i++) {
-      const value = values[i]!; // Safe assertion since i is within bounds
-      const diff = value - mean;
-      sumSquaredDiffs += diff * diff;
-    }
-
-    return sumSquaredDiffs / values.length;
+    return stats.variance(this);
   }
 
   /**
@@ -738,8 +700,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   stdDev(this: iterflow<number>): number | undefined {
-    const variance = this.variance();
-    return variance === undefined ? undefined : Math.sqrt(variance);
+    return stats.stdDev(this);
   }
 
   /**
@@ -775,26 +736,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   percentile(this: iterflow<number>, p: number): number | undefined {
-    validateRange(p, 0, 100, "percentile", "percentile");
-
-    const values = this._sourceArray || this.toArray();
-    if (values.length === 0) return undefined;
-
-    const sorted = values.slice().sort((a, b) => a - b);
-
-    if (p === 0) return sorted[0]!;
-    if (p === 100) return sorted[sorted.length - 1]!;
-
-    const index = (p / 100) * (sorted.length - 1);
-    const lower = Math.floor(index);
-    const upper = Math.ceil(index);
-
-    if (lower === upper) {
-      return sorted[lower]!;
-    }
-
-    const weight = index - lower;
-    return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
+    return stats.percentile(this, p);
   }
 
   /**
@@ -828,26 +770,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   mode(this: iterflow<number>): number[] | undefined {
-    const values = this._sourceArray || this.toArray();
-    if (values.length === 0) return undefined;
-
-    const frequency = new Map<number, number>();
-    let maxFreq = 0;
-
-    for (const value of values) {
-      const count = (frequency.get(value) || 0) + 1;
-      frequency.set(value, count);
-      maxFreq = Math.max(maxFreq, count);
-    }
-
-    const modes: number[] = [];
-    for (const [value, freq] of frequency) {
-      if (freq === maxFreq) {
-        modes.push(value);
-      }
-    }
-
-    return modes.sort((a, b) => a - b);
+    return stats.mode(this);
   }
 
   /**
@@ -883,32 +806,7 @@ export class iterflow<T> implements Iterable<T> {
   quartiles(
     this: iterflow<number>,
   ): { Q1: number; Q2: number; Q3: number } | undefined {
-    const values = this._sourceArray || this.toArray();
-    if (values.length === 0) return undefined;
-
-    const sorted = values.slice().sort((a, b) => a - b);
-
-    const calculatePercentile = (p: number): number => {
-      if (p === 0) return sorted[0]!;
-      if (p === 100) return sorted[sorted.length - 1]!;
-
-      const index = (p / 100) * (sorted.length - 1);
-      const lower = Math.floor(index);
-      const upper = Math.ceil(index);
-
-      if (lower === upper) {
-        return sorted[lower]!;
-      }
-
-      const weight = index - lower;
-      return sorted[lower]! * (1 - weight) + sorted[upper]! * weight;
-    };
-
-    return {
-      Q1: calculatePercentile(25),
-      Q2: calculatePercentile(50),
-      Q3: calculatePercentile(75),
-    };
+    return stats.quartiles(this);
   }
 
   /**
@@ -926,21 +824,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   span(this: iterflow<number>): number | undefined {
-    let minimum: number | undefined = undefined;
-    let maximum: number | undefined = undefined;
-
-    for (const value of this) {
-      if (minimum === undefined || value < minimum) {
-        minimum = value;
-      }
-      if (maximum === undefined || value > maximum) {
-        maximum = value;
-      }
-    }
-
-    return minimum === undefined || maximum === undefined
-      ? undefined
-      : maximum - minimum;
+    return stats.span(this);
   }
 
   /**
@@ -958,11 +842,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   product(this: iterflow<number>): number {
-    let result = 1;
-    for (const value of this) {
-      result *= value;
-    }
-    return result;
+    return stats.product(this);
   }
 
   /**
@@ -1005,26 +885,7 @@ export class iterflow<T> implements Iterable<T> {
     this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
-    const values1 = this._sourceArray || this.toArray();
-    const values2 = Array.from(other);
-
-    if (
-      values1.length === 0 ||
-      values2.length === 0 ||
-      values1.length !== values2.length
-    ) {
-      return undefined;
-    }
-
-    const mean1 = values1.reduce((sum, val) => sum + val, 0) / values1.length;
-    const mean2 = values2.reduce((sum, val) => sum + val, 0) / values2.length;
-
-    let covariance = 0;
-    for (let i = 0; i < values1.length; i++) {
-      covariance += (values1[i]! - mean1) * (values2[i]! - mean2);
-    }
-
-    return covariance / values1.length;
+    return stats.covariance(this, other);
   }
 
   /**
@@ -1066,40 +927,7 @@ export class iterflow<T> implements Iterable<T> {
     this: iterflow<number>,
     other: Iterable<number>,
   ): number | undefined {
-    const values1 = this._sourceArray || this.toArray();
-    const values2 = Array.from(other);
-
-    if (
-      values1.length === 0 ||
-      values2.length === 0 ||
-      values1.length !== values2.length
-    ) {
-      return undefined;
-    }
-
-    const mean1 = values1.reduce((sum, val) => sum + val, 0) / values1.length;
-    const mean2 = values2.reduce((sum, val) => sum + val, 0) / values2.length;
-
-    let covariance = 0;
-    let variance1 = 0;
-    let variance2 = 0;
-
-    for (let i = 0; i < values1.length; i++) {
-      const diff1 = values1[i]! - mean1;
-      const diff2 = values2[i]! - mean2;
-      covariance += diff1 * diff2;
-      variance1 += diff1 * diff1;
-      variance2 += diff2 * diff2;
-    }
-
-    const stdDev1 = Math.sqrt(variance1 / values1.length);
-    const stdDev2 = Math.sqrt(variance2 / values2.length);
-
-    if (stdDev1 === 0 || stdDev2 === 0) {
-      return undefined;
-    }
-
-    return covariance / (values1.length * stdDev1 * stdDev2);
+    return stats.correlation(this, other);
   }
 
   // Windowing operations
@@ -1117,32 +945,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   window(size: number): iterflow<T[]> {
-    validatePositiveInteger(size, "size", "window");
-
-    const self = this;
-    return new iterflow({
-      *[Symbol.iterator]() {
-        // Use circular buffer to avoid O(n) shift() operations
-        const buffer: T[] = new Array(size);
-        let count = 0;
-        let index = 0;
-
-        for (const value of self) {
-          buffer[index] = value;
-          count++;
-          index = (index + 1) % size;
-
-          if (count >= size) {
-            // Build window array in correct order from circular buffer
-            const window = new Array(size);
-            for (let i = 0; i < size; i++) {
-              window[i] = buffer[(index + i) % size];
-            }
-            yield window;
-          }
-        }
-      },
-    });
+    return new iterflow(windowing.window(this, size));
   }
 
   /**
@@ -1159,31 +962,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   chunk(size: number): iterflow<T[]> {
-    validatePositiveInteger(size, "size", "chunk");
-
-    const self = this;
-    return new iterflow({
-      *[Symbol.iterator]() {
-        // Preallocate buffer to avoid dynamic resizing
-        let buffer: T[] = new Array(size);
-        let bufferIndex = 0;
-
-        for (const value of self) {
-          buffer[bufferIndex++] = value;
-
-          if (bufferIndex === size) {
-            yield buffer;
-            buffer = new Array(size);
-            bufferIndex = 0;
-          }
-        }
-
-        if (bufferIndex > 0) {
-          // Slice to remove unused preallocated slots
-          yield buffer.slice(0, bufferIndex);
-        }
-      },
-    });
+    return new iterflow(windowing.chunk(this, size));
   }
 
   /**
@@ -1198,7 +977,7 @@ export class iterflow<T> implements Iterable<T> {
    * ```
    */
   pairwise(): iterflow<[T, T]> {
-    return this.window(2).map((arr) => [arr[0]!, arr[1]!] as [T, T]);
+    return new iterflow(windowing.pairwise(this));
   }
 
   // Set operations

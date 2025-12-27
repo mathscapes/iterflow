@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asyncIter, Asynciterflow } from "../src/index.js";
+import { asyncIter, AsyncIterflow } from "../src/index.js";
 
 // Helper function to create an async iterable
 async function* asyncGen<T>(...values: T[]): AsyncGenerator<T> {
@@ -11,7 +11,7 @@ async function* asyncGen<T>(...values: T[]): AsyncGenerator<T> {
 // Helper to add delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-describe("Asynciterflow", () => {
+describe("AsyncIterflow", () => {
   describe("Basic operations", () => {
     it("should create from async iterable", async () => {
       const result = await asyncIter(asyncGen(1, 2, 3)).toArray();

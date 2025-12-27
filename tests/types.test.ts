@@ -1,6 +1,6 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { iter } from '../src/index.js';
-import type { iterflow } from '../src/iter-flow.js';
+import type { iterflow } from '../src/sync/iterflow.js';
 
 describe('TypeScript Types', () => {
   describe('Type inference', () => {

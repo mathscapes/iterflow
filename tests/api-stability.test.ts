@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { iter, asyncIter, iterflow, Asynciterflow } from "../src/index.js";
+import { iter, asyncIter, iterflow, AsyncIterflow } from "../src/index.js";
 import {
   iterflowError,
   ValidationError,
@@ -141,7 +141,7 @@ describe("API Stability - iterflow Class", () => {
   });
 });
 
-describe("API Stability - Asynciterflow Class", () => {
+describe("API Stability - AsyncIterflow Class", () => {
   it("should have all expected transformation methods", () => {
     const instance = asyncIter([1, 2, 3]);
     const transformMethods = [
@@ -337,8 +337,8 @@ describe("API Stability - Exports", () => {
   it("should export all expected classes", () => {
     expect(iterflow).toBeDefined();
     expect(typeof iterflow).toBe("function");
-    expect(Asynciterflow).toBeDefined();
-    expect(typeof Asynciterflow).toBe("function");
+    expect(AsyncIterflow).toBeDefined();
+    expect(typeof AsyncIterflow).toBe("function");
   });
 
   it("should export all expected factory functions", () => {
@@ -384,9 +384,9 @@ describe("API Stability - Type Inference", () => {
     expect(flow).toBeInstanceOf(iterflow);
   });
 
-  it("should correctly infer types for Asynciterflow", () => {
-    const flow: Asynciterflow<number> = asyncIter([1, 2, 3]);
-    expect(flow).toBeInstanceOf(Asynciterflow);
+  it("should correctly infer types for AsyncIterflow", () => {
+    const flow: AsyncIterflow<number> = asyncIter([1, 2, 3]);
+    expect(flow).toBeInstanceOf(AsyncIterflow);
   });
 
   it("should correctly infer transformed types", () => {
@@ -396,8 +396,8 @@ describe("API Stability - Type Inference", () => {
   });
 
   it("should correctly infer async transformed types", async () => {
-    const numbers: Asynciterflow<number> = asyncIter([1, 2, 3]);
-    const strings: Asynciterflow<string> = numbers.map((x) => x.toString());
+    const numbers: AsyncIterflow<number> = asyncIter([1, 2, 3]);
+    const strings: AsyncIterflow<string> = numbers.map((x) => x.toString());
     expect(await strings.toArray()).toEqual(["1", "2", "3"]);
   });
 });
@@ -455,19 +455,19 @@ describe("API Stability - Method Behavior", () => {
 });
 
 describe("API Stability - v0.9.0 Additions", () => {
-  it("should have limit() method on Asynciterflow (new in v0.9.0)", () => {
+  it("should have limit() method on AsyncIterflow (new in v0.9.0)", () => {
     const instance = asyncIter([1, 2, 3]);
     expect(instance).toHaveProperty("limit");
     expect(typeof instance.limit).toBe("function");
   });
 
-  it("should have interleave() instance method on Asynciterflow (new in v0.9.0)", () => {
+  it("should have interleave() instance method on AsyncIterflow (new in v0.9.0)", () => {
     const instance = asyncIter([1, 2, 3]);
     expect(instance).toHaveProperty("interleave");
     expect(typeof instance.interleave).toBe("function");
   });
 
-  it("should have merge() instance method on Asynciterflow (new in v0.9.0)", () => {
+  it("should have merge() instance method on AsyncIterflow (new in v0.9.0)", () => {
     const instance = asyncIter([1, 2, 3]);
     expect(instance).toHaveProperty("merge");
     expect(typeof instance.merge).toBe("function");

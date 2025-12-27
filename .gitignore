@@ -109,7 +109,6 @@ examples/*-filtering.ts
 examples/*-streams.ts
 
 # Future documentation
-CODE_OF_CONDUCT.md
 SECURITY.md
 .mcp.json
 

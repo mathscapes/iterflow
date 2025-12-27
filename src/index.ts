@@ -1,4 +1,4 @@
-import { iterflow } from "./iter-flow.js";
+import { iterflow } from "./sync/iterflow.js";
 import { validateNonZero } from "./validation.js";
 
 /**
@@ -363,10 +363,10 @@ export namespace iter {
 }
 
 // Export the sync class
-export { iterflow } from "./iter-flow.js";
+export { iterflow } from "./sync/iterflow.js";
 
 // Export async functionality
-export { Asynciterflow, asyncIter } from "./async-iter-flow.js";
+export { AsyncIterflow, asyncIter } from "./async/iterflow.js";
 
 // Export error handling
 export {
