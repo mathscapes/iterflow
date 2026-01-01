@@ -1,0 +1,5 @@
+dist/
+node_modules/
+.specify/
+paper/
+RELEASE_CHECKLIST.md

@@ -1,0 +1,74 @@
+{
+  "name": "iterflow",
+  "version": "1.0.0",
+  "description": "Lazy iterator utilities with built-in statistics and windowing for memory-efficient data processing",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
+    "test": "node --test --import tsx tests/index.test.ts",
+    "prepublishOnly": "npm run build",
+    "example": "npm run build && npx tsx",
+    "examples": "npx tsx scripts/run-examples.ts"
+  },
+  "keywords": [
+    "iterator",
+    "iterable",
+    "helpers",
+    "utilities",
+    "es2022",
+    "es2025",
+    "typescript",
+    "functional",
+    "statistics",
+    "windowing",
+    "lazy",
+    "stream",
+    "pipeline",
+    "data-processing",
+    "collection",
+    "aggregation",
+    "mean",
+    "median",
+    "variance",
+    "tree-shakeable"
+  ],
+  "author": {
+    "name": "Gaurav Singh",
+    "email": "hi@gvsh.cc",
+    "url": "https://github.com/gv-sh"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mathscapes/iterflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mathscapes/iterflow/issues"
+  },
+  "homepage": "https://github.com/mathscapes/iterflow#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.0.0",
+    "lodash": "^4.17.21",
+    "rxjs": "^7.8.1",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.6.0"
+  }
+}
