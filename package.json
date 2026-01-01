@@ -1,6 +1,6 @@
 {
-  "name": "iterflow",
-  "version": "1.0.0",
+  "name": "@mathscapes/iterflow",
+  "version": "1.0.0-rc1",
   "description": "Lazy iterator utilities with built-in statistics and windowing for memory-efficient data processing",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -54,6 +54,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/mathscapes/iterflow.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
   },
   "bugs": {
     "url": "https://github.com/mathscapes/iterflow/issues"

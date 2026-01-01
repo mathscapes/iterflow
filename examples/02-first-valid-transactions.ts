@@ -10,7 +10,7 @@
  * - Memory efficiency with large datasets
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import _ from 'lodash';
 import { from } from 'rxjs';
 import { filter, take, toArray } from 'rxjs/operators';

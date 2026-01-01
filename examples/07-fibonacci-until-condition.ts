@@ -10,7 +10,7 @@
  * - Lazy evaluation preventing infinite loops
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import { from } from 'rxjs';
 import { takeWhile, reduce } from 'rxjs/operators';
 

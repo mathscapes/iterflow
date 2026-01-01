@@ -10,7 +10,7 @@
  * - enumerate() for tracking indices
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 
 const readings = [10, 11, 10, 12, 11, 50, 10, 11, 12, 10]; // 50 is anomaly
 const windowSize = 5;

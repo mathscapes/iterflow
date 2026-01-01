@@ -9,7 +9,7 @@
  * - Clean pairwise operations
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import _ from 'lodash';
 import { from } from 'rxjs';
 import { bufferCount, filter, map } from 'rxjs/operators';

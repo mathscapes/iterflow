@@ -9,7 +9,7 @@
  * - mean() for calculating averages
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import _ from 'lodash';
 import { from } from 'rxjs';
 import { bufferCount, map } from 'rxjs/operators';

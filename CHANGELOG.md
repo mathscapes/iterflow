@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.13.0] - 2026-01-01
+## [1.0.0-rc1] - 2026-01-01
 
 ### Initial Release
 
@@ -51,4 +51,4 @@ Lazy iterator utilities with built-in statistics and windowing for memory-effici
 - `max()` - Find maximum value
 - `variance()` - Calculate population variance
 
-[0.13.0]: https://github.com/mathscapes/iterflow/releases/tag/v0.13.0
+[1.0.0-rc1]: https://github.com/mathscapes/iterflow/releases/tag/v1.0.0-rc1

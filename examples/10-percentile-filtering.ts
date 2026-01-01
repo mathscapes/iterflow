@@ -12,7 +12,7 @@
  * For true 75th percentile, we'd need percentile(75) which could be added.
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import _ from 'lodash';
 
 const values = [12, 47, 23, 89, 15, 62, 34, 78, 45, 91];

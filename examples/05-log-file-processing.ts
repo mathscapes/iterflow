@@ -10,7 +10,7 @@
  * - Memory efficiency with large files
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import { from } from 'rxjs';
 import { skip, filter, take, toArray } from 'rxjs/operators';
 

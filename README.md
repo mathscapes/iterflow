@@ -3,7 +3,7 @@
 Lazy iterators with built-in statistics and windowing. Zero dependencies.
 
 ```typescript
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 
 // Rolling average of stock prices
 const prices = [100, 102, 101, 105, 107, 110];
@@ -28,7 +28,7 @@ iter(hugeDataset())
 ## Install
 
 ```bash
-npm install iterflow
+npm install @mathscapes/iterflow
 ```
 
 ## Why?
@@ -94,7 +94,7 @@ Statistical methods only work on `Iterflow<number>` and throw `EmptySequenceErro
 ### Standalone Functions
 
 ```typescript
-import { sum, mean, median, min, max, variance } from 'iterflow';
+import { sum, mean, median, min, max, variance } from '@mathscapes/iterflow';
 ```
 
 - `sum(src: Iterable<number>): number`
@@ -116,7 +116,7 @@ import { sum, mean, median, min, max, variance } from 'iterflow';
 ### Type Exports
 
 ```typescript
-import type { Predicate, Mapper, Reducer, FlatMapper } from 'iterflow';
+import type { Predicate, Mapper, Reducer, FlatMapper } from '@mathscapes/iterflow';
 ```
 
 - `Predicate<T>` = `(v: T, i: number) => boolean`

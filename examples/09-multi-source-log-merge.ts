@@ -10,7 +10,7 @@
  * - Lazy concatenation (stops early)
  */
 
-import { iter } from 'iterflow';
+import { iter } from '@mathscapes/iterflow';
 import _ from 'lodash';
 import { concat, from } from 'rxjs';
 import { filter, take, toArray } from 'rxjs/operators';
