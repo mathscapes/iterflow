@@ -132,6 +132,10 @@ import type { Predicate, Mapper, Reducer, FlatMapper } from '@mathscapes/iterflo
 
 ---
 
+## Benchmarks
+
+Performance benchmarks comparing iterflow against Lodash, iter-ops, RxJS, and native methods are available in the [`benchmarks/`](benchmarks/) directory. See [benchmarks/README.md](benchmarks/README.md) for reproduction instructions.
+
 ## Examples
 
 See the [`examples/`](examples/) directory for examples comparing iterflow with native JavaScript, Lodash, and RxJS.
