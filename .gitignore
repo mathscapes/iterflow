@@ -1,3 +1,6 @@
-.*
+.notes/
+.specify/
+specs/
 dist/
 node_modules/
+.npmrc
