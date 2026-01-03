@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-rc2] - 2026-01-03
+
+### Added
+
+- **Benchmarks**: Performance comparison suite against Lodash, iter-ops, RxJS, and native methods
+- `sideEffects: false` for better tree-shaking
+
+### Changed
+
+- **Median algorithm**: Replaced sort-based approach with Quickselect for O(n) average performance
+- **Variance algorithm**: Replaced reduce-based approach with Welford's online algorithm
+
+### Removed
+
+- Trivial JSDoc comments from public API methods
+- Unused internal helper function (`indexed`)
+
+### Internal
+
+- **GitHub templates**: Issue templates and PR template
+- **CONTRIBUTING.md**: Contributor guidelines with release process
+- **.gitignore**: Changed from catch-all to specific exclusions
+- Added dev dependencies for benchmarking: `tinybench`, `iter-ops`
+- Expanded test suite from 14 to 128 tests
+- No public API changes, no breaking changes
+
+[1.0.0-rc2]: https://github.com/mathscapes/iterflow/releases/tag/v1.0.0-rc2
+
 ## [1.0.0-rc1] - 2026-01-01
 
 ### Initial Release
