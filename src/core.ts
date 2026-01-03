@@ -31,11 +31,3 @@ export type FlatMapper<T, U> = (v: T, i: number) => Iterable<U>;
  */
 export const isIterable = (v: unknown): v is Iterable<unknown> =>
   v != null && typeof v === 'object' && Symbol.iterator in v;
-
-export function tryArrayLength(src: Iterable<unknown>): number | undefined {
-  return Array.isArray(src) ? src.length : undefined;
-}
-
-export function tryArrayIndex<T>(src: Iterable<T>, i: number): T | undefined {
-  return Array.isArray(src) ? src[i] : undefined;
-}

@@ -79,15 +79,62 @@ export const mean = (src: Iterable<number>): number => {
 };
 
 /**
- * Calculate the median (50th percentile).
+ * Partition array around a pivot for Quickselect.
+ * @private
+ */
+function partition(arr: number[], left: number, right: number): number {
+  const pivot = arr[right]!;
+  let i = left;
+  for (let j = left; j < right; j++) {
+    if (arr[j]! < pivot) {
+      [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+      i++;
+    }
+  }
+  [arr[i], arr[right]] = [arr[right]!, arr[i]!];
+  return i;
+}
+
+/**
+ * Find the k-th smallest element using Quickselect (Hoare's selection algorithm).
+ * @private
+ */
+function quickselect(arr: number[], k: number): number {
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    const pivotIndex = partition(arr, left, right);
+    if (pivotIndex === k) {
+      return arr[k]!;
+    } else if (pivotIndex > k) {
+      right = pivotIndex - 1;
+    } else {
+      left = pivotIndex + 1;
+    }
+  }
+
+  return arr[left]!;
+}
+
+/**
+ * Calculate the median (50th percentile) using Quickselect algorithm.
  * @throws {EmptySequenceError} If the sequence is empty.
  */
 export const median = (src: Iterable<number>): number => {
-  const vals = Array.from(src);
-  assertNonEmpty(vals.length, 'median');
-  vals.sort((a, b) => a - b);
-  const mid = vals.length >> 1;
-  return vals.length % 2 ? vals[mid]! : (vals[mid - 1]! + vals[mid]!) / 2;
+  const arr = Array.from(src);
+  assertNonEmpty(arr.length, 'median');
+
+  const mid = arr.length >> 1;
+  if (arr.length % 2) {
+    // Odd length: return middle element
+    return quickselect(arr, mid);
+  } else {
+    // Even length: return average of two middle elements
+    const upper = quickselect(arr, mid);
+    const lower = quickselect(arr, mid - 1);
+    return (lower + upper) / 2;
+  }
 };
 
 /**
@@ -113,16 +160,22 @@ export const max = (src: Iterable<number>): number => {
 };
 
 /**
- * Calculate the population variance.
+ * Calculate the population variance using Welford's online algorithm.
  * @throws {EmptySequenceError} If the sequence is empty.
  */
 export const variance = (src: Iterable<number>): number => {
-  const vals = Array.from(src);
-  assertNonEmpty(vals.length, 'variance');
+  let count = 0;
+  let mean = 0;
+  let M2 = 0;
 
-  let sum = 0;
-  for (const v of vals) sum += v;
-  const avg = sum / vals.length;
+  for (const x of src) {
+    count++;
+    const delta = x - mean;
+    mean += delta / count;
+    const delta2 = x - mean;
+    M2 += delta * delta2;
+  }
 
-  return vals.reduce((s, v) => s + (v - avg) ** 2, 0) / vals.length;
+  assertNonEmpty(count, 'variance');
+  return M2 / count;
 };

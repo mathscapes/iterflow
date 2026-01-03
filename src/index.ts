@@ -16,58 +16,34 @@ export class Iterflow<T> implements Iterable<T> {
   }
 
   // Transforms
-  /**
-   * Transform each element using the provided function.
-   */
   map<U>(fn: Mapper<T, U>): Iterflow<U> {
     return new Iterflow(transforms.map(this.src, fn));
   }
 
-  /**
-   * Keep only elements matching the predicate.
-   */
   filter(fn: Predicate<T>): Iterflow<T> {
     return new Iterflow(transforms.filter(this.src, fn));
   }
 
-  /**
-   * Transform each element to an iterable and flatten the results.
-   */
   flatMap<U>(fn: FlatMapper<T, U>): Iterflow<U> {
     return new Iterflow(transforms.flatMap(this.src, fn));
   }
 
-  /**
-   * Take the first n elements.
-   */
   take(n: number): Iterflow<T> {
     return new Iterflow(transforms.take(this.src, n));
   }
 
-  /**
-   * Skip the first n elements.
-   */
   drop(n: number): Iterflow<T> {
     return new Iterflow(transforms.drop(this.src, n));
   }
 
-  /**
-   * Take elements while the predicate is true.
-   */
   takeWhile(fn: Predicate<T>): Iterflow<T> {
     return new Iterflow(transforms.takeWhile(this.src, fn));
   }
 
-  /**
-   * Skip elements while the predicate is true.
-   */
   dropWhile(fn: Predicate<T>): Iterflow<T> {
     return new Iterflow(transforms.dropWhile(this.src, fn));
   }
 
-  /**
-   * Remove duplicate elements.
-   */
   distinct(): Iterflow<T> {
     return new Iterflow(transforms.distinct(this.src));
   }
@@ -101,65 +77,38 @@ export class Iterflow<T> implements Iterable<T> {
   }
 
   // Terminals
-  /**
-   * Collect all elements into an array.
-   */
   toArray(): T[] {
     return terminals.toArray(this.src);
   }
 
-  /**
-   * Fold the sequence into a single value.
-   */
   reduce<U>(fn: Reducer<T, U>, init: U): U {
     return terminals.reduce(this.src, fn, init);
   }
 
-  /**
-   * Find the first element matching the predicate.
-   */
   find(fn: Predicate<T>): T | undefined {
     return terminals.find(this.src, fn);
   }
 
-  /**
-   * Execute a function for each element.
-   */
   forEach(fn: (v: T, i: number) => void): void {
     terminals.forEach(this.src, fn);
   }
 
-  /**
-   * Get the first element, or undefined if empty.
-   */
   first(): T | undefined {
     return terminals.first(this.src);
   }
 
-  /**
-   * Get the last element, or undefined if empty.
-   */
   last(): T | undefined {
     return terminals.last(this.src);
   }
 
-  /**
-   * Count the number of elements.
-   */
   count(): number {
     return terminals.count(this.src);
   }
 
-  /**
-   * Check if any element matches the predicate.
-   */
   some(fn: Predicate<T>): boolean {
     return terminals.some(this.src, fn);
   }
 
-  /**
-   * Check if all elements match the predicate.
-   */
   every(fn: Predicate<T>): boolean {
     return terminals.every(this.src, fn);
   }
@@ -215,9 +164,6 @@ export class Iterflow<T> implements Iterable<T> {
 }
 
 // Factory function
-/**
- * Creates an Iterflow wrapper around any iterable.
- */
 export function iter<T>(src: Iterable<T>): Iterflow<T> {
   return new Iterflow(src);
 }

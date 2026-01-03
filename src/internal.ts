@@ -13,13 +13,6 @@ export function makeTransform<T, U>(
 }
 
 // Iteration helpers
-export function* indexed<T>(src: Iterable<T>): Generator<[number, T]> {
-  let i = 0;
-  for (const v of src) {
-    yield [i++, v];
-  }
-}
-
 export function assertNonEmpty(count: number, op: string): void {
   if (count === 0) {
     throw new EmptySequenceError(op);
