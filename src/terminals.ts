@@ -119,11 +119,16 @@ function quickselect(arr: number[], k: number): number {
 
 /**
  * Calculate the median (50th percentile) using Quickselect algorithm.
+ * NaN values are filtered out before calculation.
  * @throws {EmptySequenceError} If the sequence is empty.
+ * @returns {number} The median value, or NaN if all values are NaN.
  */
 export const median = (src: Iterable<number>): number => {
-  const arr = Array.from(src);
-  assertNonEmpty(arr.length, 'median');
+  const original = Array.from(src);
+  assertNonEmpty(original.length, 'median');
+
+  const arr = original.filter(x => !Number.isNaN(x));
+  if (arr.length === 0) return NaN;
 
   const mid = arr.length >> 1;
   if (arr.length % 2) {

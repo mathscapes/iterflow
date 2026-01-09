@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-rc3] - Unreleased
+
+### Fixed
+
+- `median()` now filters out NaN values for deterministic behavior (returns NaN if all values are NaN)
+
 ## [1.0.0-rc2] - 2026-01-03
 
 ### Added

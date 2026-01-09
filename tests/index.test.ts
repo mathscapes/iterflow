@@ -105,11 +105,13 @@ describe('Edge Cases - Special Values', () => {
     assert.ok(Number.isNaN(result));
   });
 
-  it('median with NaN has undefined behavior (depends on partition)', () => {
-    // NaN comparisons are always false, so Quickselect behavior with NaN is undefined
-    // We just verify it doesn't throw - result depends on partition order
-    const result = iter([1, NaN, 3]).median();
-    assert.ok(typeof result === 'number');
+  it('median filters out NaN values', () => {
+    assert.equal(iter([1, NaN, 3]).median(), 2);
+  });
+
+  it('median returns NaN when all values are NaN', () => {
+    assert.ok(Number.isNaN(iter([NaN, NaN]).median()));
+    assert.ok(Number.isNaN(iter([NaN]).median()));
   });
 
   it('variance handles NaN', () => {
@@ -595,7 +597,7 @@ describe('Terminals - every', () => {
 });
 
 describe('Generator Support', () => {
-  function* numbers(start: number, end: number) {
+  function* integerRange(start: number, end: number) {
     for (let i = start; i <= end; i++) {
       yield i;
     }
@@ -611,14 +613,14 @@ describe('Generator Support', () => {
 
   it('map works with generators', () => {
     assert.deepEqual(
-      iter(numbers(1, 5)).map(x => x * 2).toArray(),
+      iter(integerRange(1, 5)).map(x => x * 2).toArray(),
       [2, 4, 6, 8, 10]
     );
   });
 
   it('filter works with generators', () => {
     assert.deepEqual(
-      iter(numbers(1, 10)).filter(x => x % 2 === 0).toArray(),
+      iter(integerRange(1, 10)).filter(x => x % 2 === 0).toArray(),
       [2, 4, 6, 8, 10]
     );
   });
@@ -652,7 +654,7 @@ describe('Generator Support', () => {
 
   it('chaining works with generators', () => {
     assert.deepEqual(
-      iter(numbers(1, 20))
+      iter(integerRange(1, 20))
         .filter(x => x % 2 === 0)
         .map(x => x * 2)
         .take(3)
@@ -727,7 +729,7 @@ describe('Complex Chaining', () => {
     assert.equal(sum, 24);
   });
 
-  it('chains with early termination (lazy verification)', () => {
+  it('verifies lazy evaluation stops processing after take()', () => {
     let count = 0;
     iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
       .map(x => {
@@ -737,6 +739,6 @@ describe('Complex Chaining', () => {
       .filter(x => x % 2 === 0)
       .take(2)
       .toArray();
-    assert.ok(count < 10); // Should not process all elements
+    assert.ok(count < 10);
   });
 });
