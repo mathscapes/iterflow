@@ -58,7 +58,8 @@
     "url": "https://github.com/mathscapes/iterflow.git"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "bugs": {
     "url": "https://github.com/mathscapes/iterflow/issues"
