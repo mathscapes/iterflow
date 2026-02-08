@@ -1,8 +1,3 @@
-/**
- * iterflow - Lazy iterators with statistics and windowing
- * @packageDocumentation
- */
-
 import type { Predicate, Mapper, Reducer, FlatMapper } from './core.js';
 import * as transforms from './transforms.js';
 import * as terminals from './terminals.js';
@@ -48,32 +43,37 @@ export class Iterflow<T> implements Iterable<T> {
     return new Iterflow(transforms.distinct(this.src));
   }
 
-  /**
-   * Yield [index, value] pairs.
-   */
   enumerate(): Iterflow<[number, T]> {
     return new Iterflow(transforms.enumerate(this.src));
   }
 
-  /**
-   * Append additional iterables to the sequence.
-   */
   concat<U>(...others: Iterable<U>[]): Iterflow<T | U> {
     return new Iterflow(transforms.concat(this.src, ...others));
   }
 
-  /**
-   * Create sliding windows of the specified size.
-   */
   window(size: number): Iterflow<T[]> {
     return new Iterflow(transforms.window(this.src, size));
   }
 
-  /**
-   * Split the sequence into fixed-size chunks.
-   */
   chunk(size: number): Iterflow<T[]> {
     return new Iterflow(transforms.chunk(this.src, size));
+  }
+
+  zip<U>(other: Iterable<U>): Iterflow<[T, U]>;
+  zip<U, V>(other1: Iterable<U>, other2: Iterable<V>): Iterflow<[T, U, V]>;
+  zip(other: Iterable<unknown>, other2?: Iterable<unknown>): Iterflow<unknown[]> {
+    if (other2 !== undefined) {
+      return new Iterflow(transforms.zip(this.src, other, other2));
+    }
+    return new Iterflow(transforms.zip(this.src, other));
+  }
+
+  streamingMean(this: Iterflow<number>): Iterflow<number> {
+    return new Iterflow(transforms.streamingMean(this.src));
+  }
+
+  streamingVariance(this: Iterflow<number>): Iterflow<number> {
+    return new Iterflow(transforms.streamingVariance(this.src));
   }
 
   // Terminals
@@ -113,53 +113,32 @@ export class Iterflow<T> implements Iterable<T> {
     return terminals.every(this.src, fn);
   }
 
-  // Stats (numbers only)
-  /**
-   * Calculate the sum of all numbers.
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   sum(this: Iterflow<number>): number {
     return terminals.sum(this.src);
   }
 
-  /**
-   * Calculate the arithmetic mean.
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   mean(this: Iterflow<number>): number {
     return terminals.mean(this.src);
   }
 
-  /**
-   * Calculate the median (50th percentile).
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   median(this: Iterflow<number>): number {
     return terminals.median(this.src);
   }
 
-  /**
-   * Find the minimum value.
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   min(this: Iterflow<number>): number {
     return terminals.min(this.src);
   }
 
-  /**
-   * Find the maximum value.
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   max(this: Iterflow<number>): number {
     return terminals.max(this.src);
   }
 
-  /**
-   * Calculate the population variance.
-   * @throws {EmptySequenceError} If the sequence is empty.
-   */
   variance(this: Iterflow<number>): number {
     return terminals.variance(this.src);
+  }
+
+  stdDev(this: Iterflow<number>): number {
+    return terminals.stdDev(this.src);
   }
 }
 
@@ -171,4 +150,4 @@ export function iter<T>(src: Iterable<T>): Iterflow<T> {
 // Re-exports from other modules
 export { IterflowError, EmptySequenceError, isIterable } from './core.js';
 export type { Predicate, Mapper, Reducer, FlatMapper } from './core.js';
-export { sum, mean, median, min, max, variance } from './terminals.js';
+export { sum, mean, median, min, max, variance, stdDev } from './terminals.js';

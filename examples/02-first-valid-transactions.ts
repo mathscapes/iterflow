@@ -1,19 +1,4 @@
-/**
- * Example 2: First 10 Valid Transactions
- *
- * Problem: From a huge log, get first 10 transactions over $1000 that aren't flagged.
- *
- * This example demonstrates:
- * - Lazy evaluation (stops after finding 10)
- * - filter() for conditional selection
- * - take() for limiting results
- * - Memory efficiency with large datasets
- */
-
 import { iter } from '@mathscapes/iterflow';
-import _ from 'lodash';
-import { from } from 'rxjs';
-import { filter, take, toArray } from 'rxjs/operators';
 
 const transactions = [
   { id: 1, amount: 500, flagged: false },
@@ -31,50 +16,13 @@ const transactions = [
   { id: 13, amount: 1300, flagged: false },
   { id: 14, amount: 1700, flagged: false },
   { id: 15, amount: 1900, flagged: false },
-  // ... imagine millions more
 ];
 
 console.log('Finding first 10 valid transactions (amount > $1000, not flagged)...\n');
 
-console.log('Native JS');
-{
-  const result = [];
-  for (const t of transactions) {
-    if (t.amount > 1000 && !t.flagged) {
-      result.push(t);
-      if (result.length === 10) break;
-    }
-  }
-  console.log('Valid transactions:', result.map(t => `#${t.id}: $${t.amount}`));
-}
+const result = iter(transactions)
+  .filter(t => t.amount > 1000 && !t.flagged)
+  .take(10)
+  .toArray();
 
-console.log('\nLodash');
-{
-  // Eager — processes entire array even though we need 10
-  const result = _(transactions)
-    .filter(t => t.amount > 1000 && !t.flagged)
-    .take(10)
-    .value();
-  console.log('Valid transactions:', result.map(t => `#${t.id}: $${t.amount}`));
-}
-
-console.log('\nRxJS');
-{
-  from(transactions).pipe(
-    filter(t => t.amount > 1000 && !t.flagged),
-    take(10),
-    toArray()
-  ).subscribe(result => {
-    console.log('Valid transactions:', result.map(t => `#${t.id}: $${t.amount}`));
-  });
-}
-
-console.log('\niterflow');
-{
-  const result = iter(transactions)
-    .filter(t => t.amount > 1000 && !t.flagged)
-    .take(10)
-    .toArray();
-  console.log('Valid transactions:', result.map(t => `#${t.id}: $${t.amount}`));
-  // Stops after finding 10 — doesn't touch remaining millions
-}
+console.log('Valid transactions:', result.map(t => `#${t.id}: $${t.amount}`));

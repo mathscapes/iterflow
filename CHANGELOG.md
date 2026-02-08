@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-rc3] - Unreleased
 
+### Added
+
+- `.zip()` - Combine multiple iterables into tuples (stops at shortest)
+- `.streamingMean()` - Streaming transform yielding running mean at each step
+- `.streamingVariance()` - Streaming transform yielding running variance at each step
+- `.stdDev()` - Population standard deviation terminal
+
 ### Fixed
 
 - `median()` now filters out NaN values for deterministic behavior (returns NaN if all values are NaN)

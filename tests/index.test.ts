@@ -51,11 +51,22 @@ describe('Edge Cases - Empty Sequences', () => {
       (err: Error) => err instanceof EmptySequenceError && err.message.includes('variance')
     );
   });
+
+  it('stdDev throws EmptySequenceError on empty sequence', () => {
+    assert.throws(
+      () => iter([]).stdDev(),
+      (err: Error) => err instanceof EmptySequenceError && err.message.includes('variance')
+    );
+  });
 });
 
 describe('Edge Cases - Single Element', () => {
   it('variance returns 0 for single element', () => {
     assert.equal(iter([42]).variance(), 0);
+  });
+
+  it('stdDev returns 0 for single element', () => {
+    assert.equal(iter([42]).stdDev(), 0);
   });
 
   it('median returns the element for single element', () => {
@@ -83,6 +94,11 @@ describe('Edge Cases - Two Elements', () => {
   it('variance calculates correctly for two elements', () => {
     // values: [2, 4], mean: 3, variance: ((2-3)^2 + (4-3)^2) / 2 = (1 + 1) / 2 = 1
     assert.equal(iter([2, 4]).variance(), 1);
+  });
+
+  it('stdDev calculates correctly for two elements', () => {
+    // variance: 1, stdDev: sqrt(1) = 1
+    assert.equal(iter([2, 4]).stdDev(), 1);
   });
 
   it('median returns average of two elements (even length)', () => {
@@ -116,6 +132,11 @@ describe('Edge Cases - Special Values', () => {
 
   it('variance handles NaN', () => {
     const result = iter([1, NaN, 3]).variance();
+    assert.ok(Number.isNaN(result));
+  });
+
+  it('stdDev handles NaN', () => {
+    const result = iter([1, NaN, 3]).stdDev();
     assert.ok(Number.isNaN(result));
   });
 
@@ -160,6 +181,13 @@ describe('Edge Cases - Large Values (Numerical Stability)', () => {
     assert.ok(Math.abs(variance - 2) < 1e-6, `Expected ~2, got ${variance}`);
   });
 
+  it('stdDev handles large values (1e15 range)', () => {
+    const values = [1e15, 1e15 + 1, 1e15 + 2, 1e15 + 3, 1e15 + 4];
+    const stdDev = iter(values).stdDev();
+    // Expected stdDev: sqrt(2) ≈ 1.414
+    assert.ok(Math.abs(stdDev - Math.sqrt(2)) < 1e-6, `Expected ~${Math.sqrt(2)}, got ${stdDev}`);
+  });
+
   it('mean handles large values accurately', () => {
     const values = [1e15, 1e15 + 10];
     const mean = iter(values).mean();
@@ -187,6 +215,13 @@ describe('Edge Cases - Negative and Mixed Signs', () => {
     assert.ok(Math.abs(variance - 8/3) < 1e-10);
   });
 
+  it('stdDev handles negative values', () => {
+    const values = [-2, -4, -6];
+    const stdDev = iter(values).stdDev();
+    // variance: 8/3, stdDev: sqrt(8/3) ≈ 1.633
+    assert.ok(Math.abs(stdDev - Math.sqrt(8/3)) < 1e-10);
+  });
+
   it('median handles negative values', () => {
     assert.equal(iter([-3, -1, -2]).median(), -2);
   });
@@ -212,6 +247,13 @@ describe('Edge Cases - Negative and Mixed Signs', () => {
     const variance = iter(values).variance();
     // mean: 0, variance: (4 + 0 + 4) / 3 = 8/3 ≈ 2.667
     assert.ok(Math.abs(variance - 8/3) < 1e-10);
+  });
+
+  it('stdDev handles mixed signs', () => {
+    const values = [-2, 0, 2];
+    const stdDev = iter(values).stdDev();
+    // variance: 8/3, stdDev: sqrt(8/3) ≈ 1.633
+    assert.ok(Math.abs(stdDev - Math.sqrt(8/3)) < 1e-10);
   });
 
   it('median handles mixed signs', () => {
@@ -475,6 +517,163 @@ describe('Transforms - concat', () => {
 
   it('works with no additional iterables', () => {
     assert.deepEqual(iter([1, 2]).concat().toArray(), [1, 2]);
+  });
+});
+
+describe('Transforms - zip', () => {
+  it('combines two iterables into tuples', () => {
+    assert.deepEqual(
+      iter([1, 2, 3]).zip(['a', 'b', 'c']).toArray(),
+      [[1, 'a'], [2, 'b'], [3, 'c']]
+    );
+  });
+
+  it('stops at shortest iterable', () => {
+    assert.deepEqual(
+      iter([1, 2, 3, 4, 5]).zip(['a', 'b']).toArray(),
+      [[1, 'a'], [2, 'b']]
+    );
+  });
+
+  it('stops at shortest when first is shorter', () => {
+    assert.deepEqual(
+      iter([1, 2]).zip(['a', 'b', 'c', 'd']).toArray(),
+      [[1, 'a'], [2, 'b']]
+    );
+  });
+
+  it('works with empty first iterable', () => {
+    assert.deepEqual(
+      iter([]).zip(['a', 'b']).toArray(),
+      []
+    );
+  });
+
+  it('works with empty second iterable', () => {
+    assert.deepEqual(
+      iter([1, 2]).zip([]).toArray(),
+      []
+    );
+  });
+
+  it('works with three iterables', () => {
+    assert.deepEqual(
+      iter([1, 2, 3]).zip(['a', 'b', 'c'], [true, false, true]).toArray(),
+      [[1, 'a', true], [2, 'b', false], [3, 'c', true]]
+    );
+  });
+
+  it('stops at shortest with three iterables', () => {
+    assert.deepEqual(
+      iter([1, 2]).zip(['a', 'b', 'c'], [true, false, true]).toArray(),
+      [[1, 'a', true], [2, 'b', false]]
+    );
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([1, 2, 3, 4, 5]).map(x => {
+      count++;
+      return x;
+    }).zip(['a', 'b']);
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 3);
+  });
+});
+
+describe('Transforms - streamingMean', () => {
+  it('yields running mean at each step', () => {
+    const results = iter([1, 2, 3, 4, 5]).streamingMean().toArray();
+    assert.deepEqual(results, [1, 1.5, 2, 2.5, 3]);
+  });
+
+  it('works with single element', () => {
+    assert.deepEqual(iter([42]).streamingMean().toArray(), [42]);
+  });
+
+  it('works with two elements', () => {
+    assert.deepEqual(iter([2, 4]).streamingMean().toArray(), [2, 3]);
+  });
+
+  it('handles negative values', () => {
+    const results = iter([-1, -2, -3]).streamingMean().toArray();
+    assert.deepEqual(results, [-1, -1.5, -2]);
+  });
+
+  it('handles NaN values', () => {
+    const results = iter([1, NaN, 3]).streamingMean().toArray();
+    assert.equal(results[0], 1);
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles large values accurately', () => {
+    const results = iter([1e15, 1e15 + 10]).streamingMean().toArray();
+    assert.equal(results[0], 1e15);
+    assert.equal(results[1], 1e15 + 5);
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([1, 2, 3, 4, 5]).map(x => {
+      count++;
+      return x;
+    }).streamingMean();
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 5);
+  });
+});
+
+describe('Transforms - streamingVariance', () => {
+  it('yields running variance at each step', () => {
+    const results = iter([2, 4, 6]).streamingVariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[1]! - 1) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 8/3) < 1e-10);
+  });
+
+  it('returns 0 for single element', () => {
+    assert.deepEqual(iter([42]).streamingVariance().toArray(), [0]);
+  });
+
+  it('works with two elements', () => {
+    const results = iter([2, 4]).streamingVariance().toArray();
+    assert.equal(results[0], 0);
+    assert.equal(results[1], 1);
+  });
+
+  it('handles negative values', () => {
+    const results = iter([-2, -4, -6]).streamingVariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[1]! - 1) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 8/3) < 1e-10);
+  });
+
+  it('handles NaN values', () => {
+    const results = iter([1, NaN, 3]).streamingVariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles large values accurately (numerical stability)', () => {
+    const values = [1e15, 1e15 + 1, 1e15 + 2];
+    const results = iter(values).streamingVariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[2]! - 2/3) < 1e-6);
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([1, 2, 3]).map(x => {
+      count++;
+      return x;
+    }).streamingVariance();
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 3);
   });
 });
 

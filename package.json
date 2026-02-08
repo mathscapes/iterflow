@@ -1,7 +1,7 @@
 {
   "name": "@mathscapes/iterflow",
-  "version": "1.0.0-rc2",
-  "description": "Lazy iterator utilities with built-in statistics and windowing for memory-efficient data processing",
+  "version": "1.0.0-rc3",
+  "description": "Composable streaming statistics pipelines for memory-efficient data processing",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -69,11 +69,8 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.202",
     "@types/node": "^20.0.0",
     "iter-ops": "^3.5.0",
-    "lodash": "^4.17.21",
-    "rxjs": "^7.8.1",
     "tinybench": "^6.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",

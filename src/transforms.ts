@@ -111,3 +111,45 @@ export function concat<T, U>(src: Iterable<T>, ...others: Iterable<U>[]): Iterab
     for (const o of others) yield* o;
   });
 }
+
+export function zip<T, U>(src: Iterable<T>, other: Iterable<U>): Iterable<[T, U]>;
+export function zip<T, U, V>(src: Iterable<T>, other1: Iterable<U>, other2: Iterable<V>): Iterable<[T, U, V]>;
+export function zip<T>(src: Iterable<T>, ...others: Iterable<unknown>[]): Iterable<unknown[]> {
+  return makeTransform(src, function* (s) {
+    const iterators = [s[Symbol.iterator](), ...others.map(o => o[Symbol.iterator]())];
+    while (true) {
+      const results = iterators.map(it => it.next());
+      if (results.some(r => r.done)) break;
+      yield results.map(r => r.value);
+    }
+  });
+}
+
+// Streaming statistics
+export function streamingMean(src: Iterable<number>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let count = 0;
+    let mean = 0;
+    for (const x of s) {
+      count++;
+      mean += (x - mean) / count;
+      yield mean;
+    }
+  });
+}
+
+export function streamingVariance(src: Iterable<number>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let count = 0;
+    let mean = 0;
+    let M2 = 0;
+    for (const x of s) {
+      count++;
+      const delta = x - mean;
+      mean += delta / count;
+      const delta2 = x - mean;
+      M2 += delta * delta2;
+      yield M2 / count;
+    }
+  });
+}

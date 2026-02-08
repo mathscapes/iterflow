@@ -56,10 +56,6 @@ export function every<T>(src: Iterable<T>, fn: Predicate<T>): boolean {
 }
 
 // Statistical terminals
-/**
- * Calculate the sum of all numbers.
- * @throws {EmptySequenceError} If the sequence is empty.
- */
 export const sum = (src: Iterable<number>): number => {
   let total = 0, count = 0;
   for (const v of src) { total += v; count++; }
@@ -67,10 +63,6 @@ export const sum = (src: Iterable<number>): number => {
   return total;
 };
 
-/**
- * Calculate the arithmetic mean.
- * @throws {EmptySequenceError} If the sequence is empty.
- */
 export const mean = (src: Iterable<number>): number => {
   let total = 0, count = 0;
   for (const v of src) { total += v; count++; }
@@ -78,10 +70,6 @@ export const mean = (src: Iterable<number>): number => {
   return total / count;
 };
 
-/**
- * Partition array around a pivot for Quickselect.
- * @private
- */
 function partition(arr: number[], left: number, right: number): number {
   const pivot = arr[right]!;
   let i = left;
@@ -95,10 +83,6 @@ function partition(arr: number[], left: number, right: number): number {
   return i;
 }
 
-/**
- * Find the k-th smallest element using Quickselect (Hoare's selection algorithm).
- * @private
- */
 function quickselect(arr: number[], k: number): number {
   let left = 0;
   let right = arr.length - 1;
@@ -117,12 +101,7 @@ function quickselect(arr: number[], k: number): number {
   return arr[left]!;
 }
 
-/**
- * Calculate the median (50th percentile) using Quickselect algorithm.
- * NaN values are filtered out before calculation.
- * @throws {EmptySequenceError} If the sequence is empty.
- * @returns {number} The median value, or NaN if all values are NaN.
- */
+// Quickselect median with NaN filtering
 export const median = (src: Iterable<number>): number => {
   const original = Array.from(src);
   assertNonEmpty(original.length, 'median');
@@ -142,10 +121,6 @@ export const median = (src: Iterable<number>): number => {
   }
 };
 
-/**
- * Find the minimum value.
- * @throws {EmptySequenceError} If the sequence is empty.
- */
 export const min = (src: Iterable<number>): number => {
   let result = Infinity, has = false;
   for (const v of src) { if (v < result) result = v; has = true; }
@@ -153,10 +128,6 @@ export const min = (src: Iterable<number>): number => {
   return result;
 };
 
-/**
- * Find the maximum value.
- * @throws {EmptySequenceError} If the sequence is empty.
- */
 export const max = (src: Iterable<number>): number => {
   let result = -Infinity, has = false;
   for (const v of src) { if (v > result) result = v; has = true; }
@@ -164,10 +135,7 @@ export const max = (src: Iterable<number>): number => {
   return result;
 };
 
-/**
- * Calculate the population variance using Welford's online algorithm.
- * @throws {EmptySequenceError} If the sequence is empty.
- */
+// Welford's online algorithm for numerical stability
 export const variance = (src: Iterable<number>): number => {
   let count = 0;
   let mean = 0;
@@ -184,3 +152,5 @@ export const variance = (src: Iterable<number>): number => {
   assertNonEmpty(count, 'variance');
   return M2 / count;
 };
+
+export const stdDev = (src: Iterable<number>): number => Math.sqrt(variance(src));

@@ -1,6 +1,6 @@
 # Iterflow
 
-Lazy iterators with built-in statistics and windowing. Zero dependencies.
+Composable streaming statistics pipelines for JavaScript. Zero dependencies.
 
 ```typescript
 import { iter } from '@mathscapes/iterflow';
@@ -33,7 +33,7 @@ npm install @mathscapes/iterflow
 
 ## Why?
 
-Native arrays are eager. Native Iterator Helpers (ES2025) add lazy ops, but no statistics or windowing.
+ES2025 Iterator Helpers provide lazy transforms (`map`, `filter`, `take`), but lack statistical operations. Libraries like `@stdlib/stats/incr` provide streaming accumulators, but not as composable pipeline stages. **iterflow combines both**: lazy pipelines + integrated streaming statistics for memory-efficient multi-stage statistical workflows.
 
 ## API Reference
 
@@ -59,6 +59,17 @@ Transform methods return a new `Iterflow<T>` and are lazily evaluated. No comput
 - `.concat<U>(...others: Iterable<U>[]): Iterflow<T | U>` Append iterables.
 - `.window(size: number): Iterflow<T[]>` Sliding windows.
 - `.chunk(size: number): Iterflow<T[]>` Fixed-size chunks.
+- `.zip<U>(other: Iterable<U>): Iterflow<[T, U]>` Combine with another iterable into tuples.
+- `.zip<U, V>(other1: Iterable<U>, other2: Iterable<V>): Iterflow<[T, U, V]>` Combine with two iterables.
+
+---
+
+### Streaming Transform Methods
+
+Streaming methods are transforms that yield intermediate statistical values at each step. Work only on `Iterflow<number>`.
+
+- `.streamingMean(): Iterflow<number>` Yield running mean at each step.
+- `.streamingVariance(): Iterflow<number>` Yield running variance at each step (Welford's algorithm).
 
 ---
 
@@ -88,13 +99,14 @@ Statistical methods only work on `Iterflow<number>` and throw `EmptySequenceErro
 - `.min(): number` Minimum.
 - `.max(): number` Maximum.
 - `.variance(): number` Population variance.
+- `.stdDev(): number` Standard deviation (square root of variance).
 
 ---
 
 ### Standalone Functions
 
 ```typescript
-import { sum, mean, median, min, max, variance } from '@mathscapes/iterflow';
+import { sum, mean, median, min, max, variance, stdDev } from '@mathscapes/iterflow';
 ```
 
 - `sum(src: Iterable<number>): number`
@@ -103,6 +115,7 @@ import { sum, mean, median, min, max, variance } from '@mathscapes/iterflow';
 - `min(src: Iterable<number>): number`
 - `max(src: Iterable<number>): number`
 - `variance(src: Iterable<number>): number`
+- `stdDev(src: Iterable<number>): number`
 
 ---
 
