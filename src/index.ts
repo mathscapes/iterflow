@@ -76,6 +76,18 @@ export class Iterflow<T> implements Iterable<T> {
     return new Iterflow(transforms.streamingVariance(this.src));
   }
 
+  ewma(this: Iterflow<number>, alpha: number): Iterflow<number> {
+    return new Iterflow(transforms.ewma(this.src, alpha));
+  }
+
+  streamingCovariance(this: Iterflow<[number, number]>): Iterflow<number> {
+    return new Iterflow(transforms.streamingCovariance(this.src));
+  }
+
+  streamingCorrelation(this: Iterflow<[number, number]>): Iterflow<number> {
+    return new Iterflow(transforms.streamingCorrelation(this.src));
+  }
+
   // Terminals
   toArray(): T[] {
     return terminals.toArray(this.src);

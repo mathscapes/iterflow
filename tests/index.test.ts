@@ -677,6 +677,229 @@ describe('Transforms - streamingVariance', () => {
   });
 });
 
+describe('Transforms - ewma', () => {
+  it('yields exponentially weighted moving average at each step', () => {
+    const results = iter([1, 2, 3, 4, 5]).ewma(0.5).toArray();
+    assert.equal(results[0], 1);
+    assert.equal(results[1], 1.5);
+    assert.equal(results[2], 2.25);
+    assert.equal(results[3], 3.125);
+    assert.equal(results[4], 4.0625);
+  });
+
+  it('validates alpha in range (0, 1]', () => {
+    assert.throws(() => iter([1, 2, 3]).ewma(0).toArray(), /must be in range \(0, 1\]/);
+    assert.throws(() => iter([1, 2, 3]).ewma(1.1).toArray(), /must be in range \(0, 1\]/);
+    assert.throws(() => iter([1, 2, 3]).ewma(-0.1).toArray(), /must be in range \(0, 1\]/);
+    assert.throws(() => iter([1, 2, 3]).ewma(NaN).toArray(), /must be finite/);
+  });
+
+  it('works with alpha=1 (no smoothing)', () => {
+    const results = iter([1, 2, 3]).ewma(1).toArray();
+    assert.deepEqual(results, [1, 2, 3]);
+  });
+
+  it('works with alpha=0.1 (strong smoothing)', () => {
+    const results = iter([10, 20, 30]).ewma(0.1).toArray();
+    assert.equal(results[0], 10);
+    assert.equal(results[1], 11);
+    assert.equal(results[2], 12.9);
+  });
+
+  it('works with single element', () => {
+    assert.deepEqual(iter([42]).ewma(0.5).toArray(), [42]);
+  });
+
+  it('works with two elements', () => {
+    const results = iter([2, 4]).ewma(0.5).toArray();
+    assert.equal(results[0], 2);
+    assert.equal(results[1], 3);
+  });
+
+  it('handles NaN propagation', () => {
+    const results = iter([1, NaN, 3]).ewma(0.5).toArray();
+    assert.equal(results[0], 1);
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles negative values', () => {
+    const results = iter([-1, -2, -3]).ewma(0.5).toArray();
+    assert.equal(results[0], -1);
+    assert.equal(results[1], -1.5);
+    assert.equal(results[2], -2.25);
+  });
+
+  it('handles large values accurately', () => {
+    const results = iter([1e15, 1e15 + 10]).ewma(0.5).toArray();
+    assert.equal(results[0], 1e15);
+    assert.equal(results[1], 1e15 + 5);
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([1, 2, 3, 4, 5]).map(x => {
+      count++;
+      return x;
+    }).ewma(0.5);
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 5);
+  });
+});
+
+describe('Transforms - streamingCovariance', () => {
+  it('yields running covariance at each step', () => {
+    const results = iter([[1, 2], [2, 4], [3, 6]] as [number, number][]).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[1]! - 0.5) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 4/3) < 1e-10);
+  });
+
+  it('works with single pair', () => {
+    const results = iter([[1, 2]] as [number, number][]).streamingCovariance().toArray();
+    assert.deepEqual(results, [0]);
+  });
+
+  it('works with two pairs', () => {
+    const results = iter([[1, 2], [3, 4]] as [number, number][]).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.equal(results[1], 1);
+  });
+
+  it('handles negative values', () => {
+    const results = iter([[-1, -2], [-2, -4], [-3, -6]] as [number, number][]).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[1]! - 0.5) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 4/3) < 1e-10);
+  });
+
+  it('handles NaN propagation', () => {
+    const results = iter([[1, 2], [NaN, 4], [3, 6]] as [number, number][]).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles large values accurately', () => {
+    const values: [number, number][] = [[1e15, 1e15], [1e15 + 1, 1e15 + 1], [1e15 + 2, 1e15 + 2]];
+    const results = iter(values).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[2]! - 2/3) < 1e-6);
+  });
+
+  it('works with zip integration', () => {
+    const x = [1, 2, 3];
+    const y = [2, 4, 6];
+    const results = iter(x).zip(y).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.ok(Math.abs(results[1]! - 0.5) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 4/3) < 1e-10);
+  });
+
+  it('handles zero covariance (independent variables)', () => {
+    const results = iter([[1, 5], [2, 5], [3, 5]] as [number, number][]).streamingCovariance().toArray();
+    assert.equal(results[0], 0);
+    assert.equal(results[1], 0);
+    assert.equal(results[2], 0);
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([[1, 2], [2, 4], [3, 6]] as [number, number][]).map(x => {
+      count++;
+      return x;
+    }).streamingCovariance();
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 3);
+  });
+});
+
+describe('Transforms - streamingCorrelation', () => {
+  it('yields running correlation at each step', () => {
+    const results = iter([[1, 2], [2, 4], [3, 6]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Math.abs(results[1]! - 1.0) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 1.0) < 1e-10);
+  });
+
+  it('returns NaN for single pair', () => {
+    const results = iter([[1, 2]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+  });
+
+  it('works with two pairs', () => {
+    const results = iter([[1, 2], [3, 4]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Math.abs(results[1]! - 1.0) < 1e-10);
+  });
+
+  it('handles perfect positive correlation', () => {
+    const results = iter([[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    for (let i = 1; i < results.length; i++) {
+      assert.ok(Math.abs(results[i]! - 1.0) < 1e-10);
+    }
+  });
+
+  it('handles perfect negative correlation', () => {
+    const results = iter([[1, 5], [2, 4], [3, 3], [4, 2], [5, 1]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    for (let i = 1; i < results.length; i++) {
+      assert.ok(Math.abs(results[i]! - (-1.0)) < 1e-10);
+    }
+  });
+
+  it('returns NaN when one variable has zero variance', () => {
+    const results = iter([[1, 5], [2, 5], [3, 5]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles negative values', () => {
+    const results = iter([[-1, -2], [-2, -4], [-3, -6]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Math.abs(results[1]! - 1.0) < 1e-10);
+    assert.ok(Math.abs(results[2]! - 1.0) < 1e-10);
+  });
+
+  it('handles NaN propagation', () => {
+    const results = iter([[1, 2], [NaN, 4], [3, 6]] as [number, number][]).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Number.isNaN(results[1]));
+    assert.ok(Number.isNaN(results[2]));
+  });
+
+  it('handles large values accurately', () => {
+    const values: [number, number][] = [[1e15, 1e15], [1e15 + 1, 1e15 + 1], [1e15 + 2, 1e15 + 2]];
+    const results = iter(values).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    assert.ok(Math.abs(results[2]! - 1.0) < 1e-6);
+  });
+
+  it('works with zip integration', () => {
+    const x = [1, 2, 3, 4, 5];
+    const y = [2, 4, 6, 8, 10];
+    const results = iter(x).zip(y).streamingCorrelation().toArray();
+    assert.ok(Number.isNaN(results[0]));
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last - 1.0) < 1e-10);
+  });
+
+  it('is lazy', () => {
+    let count = 0;
+    const sequence = iter([[1, 2], [2, 4], [3, 6]] as [number, number][]).map(x => {
+      count++;
+      return x;
+    }).streamingCorrelation();
+    assert.equal(count, 0);
+    sequence.toArray();
+    assert.equal(count, 3);
+  });
+});
+
 describe('Terminals - toArray', () => {
   it('converts iterable to array', () => {
     assert.deepEqual(iter([1, 2, 3]).toArray(), [1, 2, 3]);

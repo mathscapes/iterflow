@@ -1,5 +1,5 @@
 import type { Predicate, Mapper, FlatMapper } from './core.js';
-import { makeTransform, validateNonNegative, validatePositive } from './internal.js';
+import { makeTransform, validateNonNegative, validatePositive, validateAlphaRange } from './internal.js';
 
 // Mapping transforms
 export function map<T, U>(src: Iterable<T>, fn: Mapper<T, U>): Iterable<U> {
@@ -150,6 +150,61 @@ export function streamingVariance(src: Iterable<number>): Iterable<number> {
       const delta2 = x - mean;
       M2 += delta * delta2;
       yield M2 / count;
+    }
+  });
+}
+
+export function ewma(src: Iterable<number>, alpha: number): Iterable<number> {
+  validateAlphaRange(alpha, 'Alpha');
+  return makeTransform(src, function* (s) {
+    let ewma: number | undefined;
+    for (const x of s) {
+      ewma = ewma === undefined ? x : alpha * x + (1 - alpha) * ewma;
+      yield ewma;
+    }
+  });
+}
+
+export function streamingCovariance(src: Iterable<[number, number]>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let count = 0;
+    let meanX = 0;
+    let meanY = 0;
+    let Cxy = 0;
+    for (const [x, y] of s) {
+      count++;
+      const deltaX = x - meanX;
+      meanX += deltaX / count;
+      const deltaY = y - meanY;
+      meanY += deltaY / count;
+      const deltaY2 = y - meanY;
+      Cxy += deltaX * deltaY2;
+      yield Cxy / count;
+    }
+  });
+}
+
+export function streamingCorrelation(src: Iterable<[number, number]>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let count = 0;
+    let meanX = 0;
+    let meanY = 0;
+    let M2x = 0;
+    let M2y = 0;
+    let Cxy = 0;
+    for (const [x, y] of s) {
+      count++;
+      const deltaX = x - meanX;
+      meanX += deltaX / count;
+      const deltaX2 = x - meanX;
+      M2x += deltaX * deltaX2;
+      const deltaY = y - meanY;
+      meanY += deltaY / count;
+      const deltaY2 = y - meanY;
+      M2y += deltaY * deltaY2;
+      Cxy += deltaX * deltaY2;
+      const denom = M2x * M2y;
+      yield denom > 0 ? Cxy / Math.sqrt(denom) : NaN;
     }
   });
 }

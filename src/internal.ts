@@ -48,3 +48,12 @@ export function validatePositive(n: number, param: string): void {
     throw new RangeError(`${param} must be positive`);
   }
 }
+
+export function validateAlphaRange(alpha: number, param: string): void {
+  if (!Number.isFinite(alpha)) {
+    throw new RangeError(`${param} must be finite`);
+  }
+  if (alpha <= 0 || alpha > 1) {
+    throw new RangeError(`${param} must be in range (0, 1]`);
+  }
+}

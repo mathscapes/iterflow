@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0-rc3] - Unreleased
+## [1.0.0-rc4] - 2026-02-10
+
+### Added
+
+- `.ewma(alpha)` - Exponentially weighted moving average with decay factor α ∈ (0,1]
+- `.streamingCovariance()` - Streaming covariance for paired data streams
+- `.streamingCorrelation()` - Streaming Pearson correlation coefficient
+
+## [1.0.0-rc3] - 2026-02-08
 
 ### Added
 

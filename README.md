@@ -70,6 +70,9 @@ Streaming methods are transforms that yield intermediate statistical values at e
 
 - `.streamingMean(): Iterflow<number>` Yield running mean at each step.
 - `.streamingVariance(): Iterflow<number>` Yield running variance at each step (Welford's algorithm).
+- `.ewma(alpha: number): Iterflow<number>` Yield exponentially weighted moving average with decay factor α ∈ (0,1].
+- `.streamingCovariance(): Iterflow<number>` Yield running covariance for paired streams (requires `Iterable<[number, number]>`).
+- `.streamingCorrelation(): Iterflow<number>` Yield running Pearson correlation coefficient for paired streams.
 
 ---
 
