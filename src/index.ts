@@ -88,6 +88,18 @@ export class Iterflow<T> implements Iterable<T> {
     return new Iterflow(transforms.streamingCorrelation(this.src));
   }
 
+  streamingZScore(this: Iterflow<number>): Iterflow<number> {
+    return new Iterflow(transforms.streamingZScore(this.src));
+  }
+
+  windowedMin(this: Iterflow<number>, size: number): Iterflow<number> {
+    return new Iterflow(transforms.windowedMin(this.src, size));
+  }
+
+  windowedMax(this: Iterflow<number>, size: number): Iterflow<number> {
+    return new Iterflow(transforms.windowedMax(this.src, size));
+  }
+
   // Terminals
   toArray(): T[] {
     return terminals.toArray(this.src);

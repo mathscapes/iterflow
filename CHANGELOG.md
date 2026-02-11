@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-rc5] - 2026-02-11
+
+### Added
+
+- `.streamingZScore()` - Z-score anomaly detection using running mean/variance (pre-observation convention)
+- `.windowedMin(size)` - Sliding window minimum via monotonic deque (O(1) amortized)
+- `.windowedMax(size)` - Sliding window maximum via monotonic deque (O(1) amortized)
+
+### Changed
+
+- `window(size)` now uses circular buffer instead of shift-based array (eliminates O(k) shift per element)
+- Trimmed test suite from 197 to 74 tests, removing trivial and redundant cases
+
 ## [1.0.0-rc4] - 2026-02-10
 
 ### Added

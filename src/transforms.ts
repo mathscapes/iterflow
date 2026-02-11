@@ -84,10 +84,18 @@ export function distinct<T>(src: Iterable<T>): Iterable<T> {
 export function window<T>(src: Iterable<T>, size: number): Iterable<T[]> {
   validatePositive(size, 'Window size');
   return makeTransform(src, function* (s) {
-    const buf: T[] = [];
+    const buf = new Array<T>(size);
+    let pos = 0;
+    let count = 0;
     for (const v of s) {
-      buf.push(v);
-      if (buf.length === size) { yield buf.slice(); buf.shift(); }
+      buf[pos] = v;
+      pos = (pos + 1) % size;
+      count++;
+      if (count >= size) {
+        const result = new Array<T>(size);
+        for (let i = 0; i < size; i++) result[i] = buf[(pos + i) % size]!;
+        yield result;
+      }
     }
   });
 }
@@ -205,6 +213,73 @@ export function streamingCorrelation(src: Iterable<[number, number]>): Iterable<
       Cxy += deltaX * deltaY2;
       const denom = M2x * M2y;
       yield denom > 0 ? Cxy / Math.sqrt(denom) : NaN;
+    }
+  });
+}
+
+export function streamingZScore(src: Iterable<number>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let count = 0;
+    let mean = 0;
+    let M2 = 0;
+    for (const x of s) {
+      if (count < 2) {
+        yield NaN;
+      } else {
+        const diff = x - mean;
+        yield diff === 0 ? 0 : diff / Math.sqrt(M2 / count);
+      }
+      count++;
+      const delta = x - mean;
+      mean += delta / count;
+      const delta2 = x - mean;
+      M2 += delta * delta2;
+    }
+  });
+}
+
+export function windowedMin(src: Iterable<number>, size: number): Iterable<number> {
+  validatePositive(size, 'Window size');
+  return makeTransform(src, function* (s) {
+    const dequeVal: number[] = [];
+    const dequeIdx: number[] = [];
+    let i = 0;
+    for (const x of s) {
+      while (dequeVal.length > 0 && dequeVal[dequeVal.length - 1]! >= x) {
+        dequeVal.pop();
+        dequeIdx.pop();
+      }
+      dequeVal.push(x);
+      dequeIdx.push(i);
+      if (dequeIdx[0]! <= i - size) {
+        dequeVal.shift();
+        dequeIdx.shift();
+      }
+      if (i >= size - 1) yield dequeVal[0]!;
+      i++;
+    }
+  });
+}
+
+export function windowedMax(src: Iterable<number>, size: number): Iterable<number> {
+  validatePositive(size, 'Window size');
+  return makeTransform(src, function* (s) {
+    const dequeVal: number[] = [];
+    const dequeIdx: number[] = [];
+    let i = 0;
+    for (const x of s) {
+      while (dequeVal.length > 0 && dequeVal[dequeVal.length - 1]! <= x) {
+        dequeVal.pop();
+        dequeIdx.pop();
+      }
+      dequeVal.push(x);
+      dequeIdx.push(i);
+      if (dequeIdx[0]! <= i - size) {
+        dequeVal.shift();
+        dequeIdx.shift();
+      }
+      if (i >= size - 1) yield dequeVal[0]!;
+      i++;
     }
   });
 }
