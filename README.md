@@ -1,5 +1,7 @@
 # Iterflow
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18610143.svg)](https://doi.org/10.5281/zenodo.18610143)
+
 Composable streaming statistics pipelines for JavaScript. Zero dependencies.
 
 ```typescript
@@ -71,8 +73,11 @@ Streaming methods are transforms that yield intermediate statistical values at e
 - `.streamingMean(): Iterflow<number>` Yield running mean at each step.
 - `.streamingVariance(): Iterflow<number>` Yield running variance at each step (Welford's algorithm).
 - `.ewma(alpha: number): Iterflow<number>` Yield exponentially weighted moving average with decay factor α ∈ (0,1].
+- `.streamingZScore(): Iterflow<number>` Yield z-scores using running mean/variance from prior observations. NaN for first two elements.
 - `.streamingCovariance(): Iterflow<number>` Yield running covariance for paired streams (requires `Iterable<[number, number]>`).
 - `.streamingCorrelation(): Iterflow<number>` Yield running Pearson correlation coefficient for paired streams.
+- `.windowedMin(size: number): Iterflow<number>` Sliding window minimum via monotonic deque. O(1) amortized.
+- `.windowedMax(size: number): Iterflow<number>` Sliding window maximum via monotonic deque. O(1) amortized.
 
 ---
 

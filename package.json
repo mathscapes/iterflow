@@ -1,6 +1,6 @@
 {
   "name": "@mathscapes/iterflow",
-  "version": "1.0.0-rc5",
+  "version": "1.0.0",
   "description": "Composable streaming statistics pipelines for memory-efficient data processing",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -69,6 +69,8 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@esbuild/linux-arm64": "^0.27.3",
+    "@stdlib/stats-incr-mvariance": "^0.2.3",
     "@types/node": "^20.0.0",
     "iter-ops": "^3.5.0",
     "tinybench": "^6.0.0",

@@ -256,3 +256,31 @@ test('example 10: filters values above median', () => {
   assert.ok(result.every(v => v >= median));
   assert.strictEqual(median, 46);
 });
+
+// Example 11: Z-Score Anomaly Detection
+test('example 11: detects latency spikes via streaming z-score', () => {
+  const latencies = [45, 42, 48, 44, 46, 43, 47, 45, 44, 200, 46, 43, 45, 250, 44];
+  const anomalies = iter(latencies)
+    .streamingZScore()
+    .enumerate()
+    .filter(([_, z]) => Math.abs(z) > 3)
+    .map(([i]) => i)
+    .toArray();
+
+  assert.ok(anomalies.includes(9));
+  assert.ok(anomalies.includes(13));
+});
+
+// Example 12: EWMA + Windowed Extrema
+test('example 12: ewma smoothing and windowed min/max', () => {
+  const prices = [100, 102, 98, 105, 97, 110, 95, 108, 103, 112, 99, 115];
+  const smoothed = iter(prices).ewma(0.3).toArray();
+  assert.strictEqual(smoothed.length, prices.length);
+  assert.strictEqual(smoothed[0], 100);
+
+  const mins = iter(prices).windowedMin(4).toArray();
+  const maxs = iter(prices).windowedMax(4).toArray();
+  assert.strictEqual(mins.length, prices.length - 3);
+  assert.strictEqual(mins[0], Math.min(100, 102, 98, 105));
+  assert.strictEqual(maxs[0], Math.max(100, 102, 98, 105));
+});

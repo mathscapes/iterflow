@@ -33,12 +33,21 @@ node --expose-gc --import tsx 03-memory-efficiency.bench.ts
 
 GC pressure comparison. Expected: ~50% fewer GC events, reduced memory delta.
 
+### 04: Anomaly Detection & Windowed Extrema
+
+```bash
+npx tsx 04-anomaly-detection-windowed-extrema.bench.ts
+```
+
+Monotonic deque windowedMin/Max vs naive O(n*k), circular buffer window vs shift-based, streaming z-score vs naive two-pass. Expected: monotonic deque dominates at large window sizes.
+
 ## Run All
 
 ```bash
 npx tsx 01-lazy-evaluation.bench.ts
 npx tsx 02-statistical-operations.bench.ts
 node --expose-gc --import tsx 03-memory-efficiency.bench.ts
+npx tsx 04-anomaly-detection-windowed-extrema.bench.ts
 ```
 
 ## Structure
@@ -48,6 +57,7 @@ benchmarks/
 ├── 01-lazy-evaluation.bench.ts
 ├── 02-statistical-operations.bench.ts
 ├── 03-memory-efficiency.bench.ts (self-contained with GC utilities)
+├── 04-anomaly-detection-windowed-extrema.bench.ts
 ├── config.ts (shared scales)
 └── README.md
 ```
