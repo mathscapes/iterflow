@@ -210,19 +210,42 @@
 
 ---
 
-## Next Steps
+## Progress Tracker
 
-1. ✅ Create papers/v2 folder
-2. ✅ Document v2 plan
-3. [ ] Identify which new streaming algorithms to implement first
-4. [ ] Set up benchmarking framework
-5. [ ] Start library v2.0 development
+### ✅ Day 1 Complete (2026-03-12)
+
+**Environmental Monitoring Use Cases:**
+- [x] Sensor data simulator (AQI, temperature, PM2.5 streams)
+- [x] Air quality monitoring example (rolling stats, anomaly detection, EWMA)
+- [x] Memory benchmark (streaming vs batch comparison)
+- [x] Documentation (README with use cases and key findings)
+
+**Results:**
+- 1M sensor readings: 5 MB (streaming) vs 80 MB (batch)
+- Real-world applications documented (smart cities, IoT, edge computing)
+- Code ready for SoftwareX reproducibility requirements
+
+**Branch:** `feat/v2-environmental-use-cases`
 
 ---
 
-**Question for Gaurav:** Which additions do you want to prioritize first?
+### 🔄 Day 2 TODO (Next)
 
-- New streaming algorithms (quantiles, histogram, etc.)?
-- Extended benchmarks & memory profiling?
-- Use case studies?
-- Something else?
+**Reproducibility Workflows:**
+- [ ] Create 3 analysis templates (time-series, anomaly detection, correlation)
+- [ ] Write comparison section (iterflow vs pandas/numpy)
+- [ ] Add "Reproducible Workflows" examples
+- [ ] Document methodology (compositional patterns)
+- [ ] Polish + format for paper
+
+---
+
+### 📋 Remaining for v2
+
+- [ ] Library version bump to 2.0.0
+- [ ] Paper writing (merge v1 + new content)
+- [ ] Format for SoftwareX
+- [ ] Reproducibility package (Docker + scripts)
+- [ ] Submit
+
+**Timeline:** On track for 48-hour completion
