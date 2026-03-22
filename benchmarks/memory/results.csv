@@ -1,0 +1,8 @@
+# Hardware: Apple M2 | 8.0 GB RAM | Darwin 25.2.0 arm64 | Node.js v25.2.1 | 2026-03-22T12:21:13.157Z
+library,scale,iterations,gc_events,scavenge_count,mark_sweep_count,gc_pause_ms,heap_delta_mb,time_ms
+iterflow,10000,100,0,0,0,0.0000,-0.1800,24.74
+native-array,10000,100,0,0,0,0.0000,0.0000,24.67
+iterflow,100000,100,0,0,0,0.0000,0.0300,56.42
+native-array,100000,100,0,0,0,0.0000,0.0000,400.14
+iterflow,1000000,100,0,0,0,0.0000,0.0200,70.80
+native-array,1000000,100,0,0,0,0.0000,-1.0600,11037.66

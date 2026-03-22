@@ -3,6 +3,7 @@
  * GC monitoring during Filter-Map-Take pipeline (requires --expose-gc)
  */
 
+import os from 'node:os';
 import { iter } from '../src/index.js';
 import { PerformanceObserver, performance } from 'perf_hooks';
 import { TRANSACTION_CONFIG, BENCHMARK_SCALES, GC_CONFIG } from './config.js';
@@ -242,8 +243,34 @@ async function main() {
     Library: r.library,
     'N': r.scale.toLocaleString(),
     'GC Events': r.gcMetrics.totalEvents,
-    'Heap (MB)': r.memoryDelta.heapUsedMB.toFixed(2)
+    'Scavenge': r.gcMetrics.scavengeCount,
+    'Mark-Sweep': r.gcMetrics.markSweepCount,
+    'GC Pause (ms)': r.gcMetrics.totalPauseTime.toFixed(2),
+    'Heap Delta (MB)': r.memoryDelta.heapUsedMB.toFixed(2),
+    'Time (ms)': r.timeMs.toFixed(1)
   })));
+
+  // Output CSV for memory results (to stderr so stdout can be piped)
+  const cpus = os.cpus();
+  const cpuModel = cpus[0]?.model ?? 'unknown';
+  const ramGB = (os.totalmem() / (1024 ** 3)).toFixed(1);
+  const platform = `${os.type()} ${os.release()} ${os.arch()}`;
+  const nodeVersion = process.version;
+  const timestamp = new Date().toISOString();
+
+  const csvPath = new URL('./memory/results.csv', import.meta.url);
+  const csvLines = [
+    `# Hardware: ${cpuModel} | ${ramGB} GB RAM | ${platform} | Node.js ${nodeVersion} | ${timestamp}`,
+    'library,scale,iterations,gc_events,scavenge_count,mark_sweep_count,gc_pause_ms,heap_delta_mb,time_ms',
+    ...allResults.map(r =>
+      `${r.library},${r.scale},${r.iterations},${r.gcMetrics.totalEvents},${r.gcMetrics.scavengeCount},${r.gcMetrics.markSweepCount},${r.gcMetrics.totalPauseTime.toFixed(4)},${r.memoryDelta.heapUsedMB.toFixed(4)},${r.timeMs.toFixed(2)}`
+    )
+  ];
+
+  const fs = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  fs.writeFileSync(fileURLToPath(csvPath), csvLines.join('\n') + '\n');
+  console.log(`\nMemory CSV written to benchmarks/memory/results.csv`);
 }
 
 main().catch(console.error);
