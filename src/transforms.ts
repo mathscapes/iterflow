@@ -1,5 +1,5 @@
 import type { Predicate, Mapper, FlatMapper } from './core.js';
-import { makeTransform, validateNonNegative, validatePositive, validateAlphaRange } from './internal.js';
+import { makeTransform, validateNonNegative, validatePositive, validateAlphaRange, validateProbability } from './internal.js';
 
 // Mapping transforms
 export function map<T, U>(src: Iterable<T>, fn: Mapper<T, U>): Iterable<U> {
@@ -280,6 +280,244 @@ export function windowedMax(src: Iterable<number>, size: number): Iterable<numbe
       }
       if (i >= size - 1) yield dequeVal[0]!;
       i++;
+    }
+  });
+}
+
+// Streaming higher-order moments (Pébay 2008 / Terriberry 2007)
+export function streamingSkewness(src: Iterable<number>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let n = 0;
+    let mean = 0;
+    let M2 = 0;
+    let M3 = 0;
+    for (const x of s) {
+      n++;
+      const delta = x - mean;
+      const deltaN = delta / n;
+      const term1 = delta * deltaN * (n - 1);
+      mean += deltaN;
+      M3 += term1 * deltaN * (n - 2) - 3 * deltaN * M2;
+      M2 += term1;
+      if (n < 3 || M2 === 0) {
+        yield NaN;
+      } else {
+        const variance = M2 / n;
+        yield (M3 / n) / (variance * Math.sqrt(variance));
+      }
+    }
+  });
+}
+
+export function streamingKurtosis(src: Iterable<number>): Iterable<number> {
+  return makeTransform(src, function* (s) {
+    let n = 0;
+    let mean = 0;
+    let M2 = 0;
+    let M3 = 0;
+    let M4 = 0;
+    for (const x of s) {
+      n++;
+      const delta = x - mean;
+      const deltaN = delta / n;
+      const deltaN2 = deltaN * deltaN;
+      const term1 = delta * deltaN * (n - 1);
+      mean += deltaN;
+      M4 += term1 * deltaN2 * (n * n - 3 * n + 3) + 6 * deltaN2 * M2 - 4 * deltaN * M3;
+      M3 += term1 * deltaN * (n - 2) - 3 * deltaN * M2;
+      M2 += term1;
+      if (n < 4 || M2 === 0) {
+        yield NaN;
+      } else {
+        const variance = M2 / n;
+        yield (M4 / n) / (variance * variance) - 3;
+      }
+    }
+  });
+}
+
+// Streaming histogram
+export function streamingHistogram(src: Iterable<number>, binCount: number, min: number, max: number): Iterable<number[]> {
+  validatePositive(binCount, 'Bin count');
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    throw new RangeError('Min and max must be finite');
+  }
+  if (min >= max) {
+    throw new RangeError('Min must be less than max');
+  }
+  return makeTransform(src, function* (s) {
+    const bins = new Array<number>(binCount).fill(0);
+    const binWidth = (max - min) / binCount;
+    for (const x of s) {
+      if (x >= min && x <= max) {
+        const idx = x === max ? binCount - 1 : Math.floor((x - min) / binWidth);
+        bins[idx]!++;
+      }
+      yield bins.slice();
+    }
+  });
+}
+
+// Streaming linear regression (online least squares)
+export function streamingLinearRegression(src: Iterable<[number, number]>): Iterable<{ slope: number; intercept: number; rSquared: number }> {
+  return makeTransform(src, function* (s) {
+    let n = 0;
+    let meanX = 0;
+    let meanY = 0;
+    let M2x = 0;
+    let Cxy = 0;
+    let M2y = 0;
+    for (const [x, y] of s) {
+      n++;
+      const deltaX = x - meanX;
+      meanX += deltaX / n;
+      const deltaX2 = x - meanX;
+      M2x += deltaX * deltaX2;
+      const deltaY = y - meanY;
+      meanY += deltaY / n;
+      const deltaY2 = y - meanY;
+      M2y += deltaY * deltaY2;
+      Cxy += deltaX * deltaY2;
+      if (n < 2 || M2x === 0) {
+        yield { slope: NaN, intercept: NaN, rSquared: NaN };
+      } else {
+        const slope = Cxy / M2x;
+        const intercept = meanY - slope * meanX;
+        const rSquared = M2y > 0 ? (Cxy * Cxy) / (M2x * M2y) : NaN;
+        yield { slope, intercept, rSquared };
+      }
+    }
+  });
+}
+
+// Auto-correlation (lag-based correlation for time series)
+export function autoCorrelation(src: Iterable<number>, lag: number): Iterable<number> {
+  validatePositive(lag, 'Lag');
+  return makeTransform(src, function* (s) {
+    const buffer: number[] = [];
+    let n = 0;
+    let meanAll = 0;
+    let M2all = 0;
+    for (const x of s) {
+      n++;
+      const delta = x - meanAll;
+      meanAll += delta / n;
+      M2all += delta * (x - meanAll);
+      buffer.push(x);
+      if (n <= lag) {
+        yield NaN;
+      } else {
+        // Compute auto-correlation at the given lag using the full series seen so far
+        const variance = M2all / n;
+        if (variance === 0) {
+          yield NaN;
+        } else {
+          let cov = 0;
+          const len = buffer.length;
+          for (let i = 0; i < len - lag; i++) {
+            cov += (buffer[i]! - meanAll) * (buffer[i + lag]! - meanAll);
+          }
+          cov /= n;
+          yield cov / variance;
+        }
+      }
+    }
+  });
+}
+
+// Streaming quantiles (P-square algorithm, Jain & Chlamtac 1985)
+export function streamingQuantile(src: Iterable<number>, p: number): Iterable<number> {
+  validateProbability(p, 'Quantile');
+  return makeTransform(src, function* (s) {
+    // P-square uses 5 markers to estimate the p-th quantile
+    const q = new Array<number>(5); // marker heights
+    const n = new Array<number>(5); // marker positions (1-indexed)
+    const nPrime = new Array<number>(5); // desired marker positions
+    const dn = [0, p / 2, p, (1 + p) / 2, 1]; // increments
+    let count = 0;
+    const initial: number[] = [];
+
+    for (const x of s) {
+      count++;
+      if (count <= 5) {
+        initial.push(x);
+        if (count < 5) {
+          yield NaN;
+          continue;
+        }
+        // Initialize with first 5 observations sorted
+        initial.sort((a, b) => a - b);
+        for (let i = 0; i < 5; i++) {
+          q[i] = initial[i]!;
+          n[i] = i + 1;
+          nPrime[i] = 1 + 2 * dn[i]! * 2; // desired positions for n=5
+        }
+        // Correct desired positions for initial state
+        nPrime[0] = 1;
+        nPrime[1] = 1 + 2 * p / 2;
+        nPrime[2] = 1 + 2 * p;
+        nPrime[3] = 1 + 2 * (1 + p) / 2;
+        nPrime[4] = 5;
+        yield q[2]!;
+        continue;
+      }
+
+      // Step B1: Find cell k
+      let k: number;
+      if (x < q[0]!) {
+        q[0] = x;
+        k = 0;
+      } else if (x < q[1]!) {
+        k = 0;
+      } else if (x < q[2]!) {
+        k = 1;
+      } else if (x < q[3]!) {
+        k = 2;
+      } else if (x <= q[4]!) {
+        k = 3;
+      } else {
+        q[4] = x;
+        k = 3;
+      }
+
+      // Step B2: Increment positions
+      for (let i = k + 1; i < 5; i++) n[i]!++;
+
+      // Update desired positions
+      nPrime[0] = 1;
+      nPrime[1] = (count - 1) * p / 2 + 1;
+      nPrime[2] = (count - 1) * p + 1;
+      nPrime[3] = (count - 1) * (1 + p) / 2 + 1;
+      nPrime[4] = count;
+
+      // Step B3: Adjust marker heights
+      for (let i = 1; i <= 3; i++) {
+        const di = nPrime[i]! - n[i]!;
+        if ((di >= 1 && (n[i + 1]! - n[i]!) > 1) || (di <= -1 && (n[i - 1]! - n[i]!) < -1)) {
+          const sign = di > 0 ? 1 : -1;
+          // Try parabolic
+          const qi = q[i]!;
+          const qim1 = q[i - 1]!;
+          const qip1 = q[i + 1]!;
+          const ni = n[i]!;
+          const nim1 = n[i - 1]!;
+          const nip1 = n[i + 1]!;
+          const parabolic = qi + (sign / (nip1 - nim1)) * (
+            (ni - nim1 + sign) * (qip1 - qi) / (nip1 - ni) +
+            (nip1 - ni - sign) * (qi - qim1) / (ni - nim1)
+          );
+          if (qim1 < parabolic && parabolic < qip1) {
+            q[i] = parabolic;
+          } else {
+            // Linear fallback
+            const j = i + sign;
+            q[i] = qi + sign * (q[j]! - qi) / (n[j]! - ni);
+          }
+          n[i] = ni + sign;
+        }
+      }
+
+      yield q[2]!;
     }
   });
 }

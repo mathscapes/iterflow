@@ -78,6 +78,12 @@ Streaming methods are transforms that yield intermediate statistical values at e
 - `.streamingCorrelation(): Iterflow<number>` Yield running Pearson correlation coefficient for paired streams.
 - `.windowedMin(size: number): Iterflow<number>` Sliding window minimum via monotonic deque. O(1) amortized.
 - `.windowedMax(size: number): Iterflow<number>` Sliding window maximum via monotonic deque. O(1) amortized.
+- `.streamingSkewness(): Iterflow<number>` Yield running skewness at each step (higher-order Welford's). NaN for first two elements.
+- `.streamingKurtosis(): Iterflow<number>` Yield running excess kurtosis at each step. NaN for first three elements.
+- `.streamingHistogram(binCount, min, max): Iterflow<number[]>` Yield cumulative histogram bin counts at each step.
+- `.streamingLinearRegression(): Iterflow<{slope, intercept, rSquared}>` Yield running OLS regression for paired streams (requires `Iterable<[number, number]>`).
+- `.autoCorrelation(lag: number): Iterflow<number>` Yield running auto-correlation at the given lag. NaN until enough data.
+- `.streamingQuantile(p: number): Iterflow<number>` Yield running quantile estimate via P-square algorithm. p ∈ [0, 1]. NaN for first four elements.
 
 ---
 
