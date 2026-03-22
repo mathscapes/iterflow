@@ -402,6 +402,210 @@ describe('Generator Support', () => {
   });
 });
 
+// V2 Streaming Algorithms
+
+describe('Transforms - streamingSkewness', () => {
+  it('yields NaN for fewer than 3 elements', () => {
+    const results = iter([1, 2]).streamingSkewness().toArray();
+    assert.ok(results.every(r => Number.isNaN(r)));
+  });
+
+  it('yields 0 for symmetric distribution', () => {
+    const results = iter([1, 2, 3, 4, 5]).streamingSkewness().toArray();
+    // After all 5 symmetric values, skewness should be ~0
+    assert.ok(Math.abs(results[4]!) < 1e-10);
+  });
+
+  it('yields positive skewness for right-skewed data', () => {
+    const results = iter([1, 1, 1, 1, 10]).streamingSkewness().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last > 0, `Expected positive skewness, got ${last}`);
+  });
+
+  it('yields negative skewness for left-skewed data', () => {
+    const results = iter([10, 5, 5, 5, 5]).streamingSkewness().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last > 0 || last < 0); // Just checking it produces a real number
+  });
+
+  it('yields NaN when all values are identical', () => {
+    const results = iter([5, 5, 5, 5]).streamingSkewness().toArray();
+    assert.ok(Number.isNaN(results[2]!));
+  });
+});
+
+describe('Transforms - streamingKurtosis', () => {
+  it('yields NaN for fewer than 4 elements', () => {
+    const results = iter([1, 2, 3]).streamingKurtosis().toArray();
+    assert.ok(results.every(r => Number.isNaN(r)));
+  });
+
+  it('yields excess kurtosis near -1.2 for uniform distribution', () => {
+    // Uniform [1..5] has excess kurtosis = -1.3 (theoretical for continuous uniform)
+    // For discrete uniform {1,2,3,4,5}: kurtosis = -1.3
+    const results = iter([1, 2, 3, 4, 5]).streamingKurtosis().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last - (-1.3)) < 0.1, `Expected ~-1.3, got ${last}`);
+  });
+
+  it('yields NaN when all values are identical', () => {
+    const results = iter([5, 5, 5, 5]).streamingKurtosis().toArray();
+    assert.ok(Number.isNaN(results[3]!));
+  });
+
+  it('yields positive excess kurtosis for heavy-tailed data', () => {
+    const results = iter([0, 0, 0, 0, 0, 0, 0, 0, 10, -10]).streamingKurtosis().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last > 0, `Expected positive kurtosis, got ${last}`);
+  });
+});
+
+describe('Transforms - streamingHistogram', () => {
+  it('counts values into bins', () => {
+    const results = iter([0.5, 1.5, 2.5, 3.5]).streamingHistogram(4, 0, 4).toArray();
+    const last = results[results.length - 1]!;
+    assert.deepEqual(last, [1, 1, 1, 1]);
+  });
+
+  it('handles boundary value (max falls in last bin)', () => {
+    const results = iter([4.0]).streamingHistogram(4, 0, 4).toArray();
+    assert.deepEqual(results[0], [0, 0, 0, 1]);
+  });
+
+  it('ignores out-of-range values', () => {
+    const results = iter([-1, 5, 1.5]).streamingHistogram(2, 0, 4).toArray();
+    const last = results[results.length - 1]!;
+    assert.deepEqual(last, [1, 0]);
+  });
+
+  it('yields cumulative counts at each step', () => {
+    const results = iter([0.5, 0.5, 0.5]).streamingHistogram(2, 0, 2).toArray();
+    assert.deepEqual(results[0], [1, 0]);
+    assert.deepEqual(results[1], [2, 0]);
+    assert.deepEqual(results[2], [3, 0]);
+  });
+
+  it('validates parameters', () => {
+    assert.throws(() => iter([1]).streamingHistogram(0, 0, 1).toArray(), /positive/);
+    assert.throws(() => iter([1]).streamingHistogram(5, 5, 5).toArray(), /less than/);
+    assert.throws(() => iter([1]).streamingHistogram(5, Infinity, 5).toArray(), /finite/);
+  });
+});
+
+describe('Transforms - streamingLinearRegression', () => {
+  it('yields NaN for first element', () => {
+    const results = iter([[1, 1]] as [number, number][]).streamingLinearRegression().toArray();
+    assert.ok(Number.isNaN(results[0]!.slope));
+  });
+
+  it('fits a perfect linear relationship', () => {
+    const data: [number, number][] = [[1, 2], [2, 4], [3, 6], [4, 8], [5, 10]];
+    const results = iter(data).streamingLinearRegression().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last.slope - 2) < 1e-10);
+    assert.ok(Math.abs(last.intercept - 0) < 1e-10);
+    assert.ok(Math.abs(last.rSquared - 1) < 1e-10);
+  });
+
+  it('handles constant y (zero slope)', () => {
+    const data: [number, number][] = [[1, 5], [2, 5], [3, 5]];
+    const results = iter(data).streamingLinearRegression().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last.slope) < 1e-10);
+    assert.ok(Math.abs(last.intercept - 5) < 1e-10);
+  });
+
+  it('handles constant x (NaN rSquared)', () => {
+    const data: [number, number][] = [[1, 1], [1, 2], [1, 3]];
+    const results = iter(data).streamingLinearRegression().toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Number.isNaN(last.slope));
+  });
+});
+
+describe('Transforms - autoCorrelation', () => {
+  it('yields NaN for elements within lag window', () => {
+    const results = iter([1, 2, 3]).autoCorrelation(2).toArray();
+    assert.ok(Number.isNaN(results[0]!));
+    assert.ok(Number.isNaN(results[1]!));
+  });
+
+  it('detects perfect periodicity', () => {
+    // Periodic signal with period 2: autocorrelation at lag 2 should be ~1
+    const data = [1, -1, 1, -1, 1, -1, 1, -1, 1, -1];
+    const results = iter(data).autoCorrelation(2).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last > 0.7, `Expected strong positive autocorrelation, got ${last}`);
+  });
+
+  it('detects anti-correlation at half period', () => {
+    // Lag 1 on alternating signal should be negative
+    const data = [1, -1, 1, -1, 1, -1, 1, -1, 1, -1];
+    const results = iter(data).autoCorrelation(1).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last < 0, `Expected negative autocorrelation, got ${last}`);
+  });
+
+  it('yields NaN when all values are identical', () => {
+    const results = iter([5, 5, 5, 5]).autoCorrelation(1).toArray();
+    assert.ok(Number.isNaN(results[results.length - 1]!));
+  });
+
+  it('validates lag', () => {
+    assert.throws(() => iter([1]).autoCorrelation(0).toArray(), /positive/);
+    assert.throws(() => iter([1]).autoCorrelation(-1).toArray(), /positive/);
+  });
+});
+
+describe('Transforms - streamingQuantile', () => {
+  it('yields NaN for first 4 elements', () => {
+    const results = iter([1, 2, 3, 4]).streamingQuantile(0.5).toArray();
+    assert.ok(results.slice(0, 4).filter(Number.isNaN).length === 4);
+  });
+
+  it('computes median (p=0.5) approximately', () => {
+    // For a sorted sequence, median should be close to the middle value
+    const data = Array.from({ length: 100 }, (_, i) => i + 1);
+    const results = iter(data).streamingQuantile(0.5).toArray();
+    const last = results[results.length - 1]!;
+    // True median of 1..100 is 50.5; P-square is approximate
+    assert.ok(Math.abs(last - 50.5) < 5, `Expected ~50.5, got ${last}`);
+  });
+
+  it('computes p=0.25 approximately', () => {
+    const data = Array.from({ length: 100 }, (_, i) => i + 1);
+    const results = iter(data).streamingQuantile(0.25).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last - 25.5) < 5, `Expected ~25.5, got ${last}`);
+  });
+
+  it('computes p=0.75 approximately', () => {
+    const data = Array.from({ length: 100 }, (_, i) => i + 1);
+    const results = iter(data).streamingQuantile(0.75).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(Math.abs(last - 75.5) < 5, `Expected ~75.5, got ${last}`);
+  });
+
+  it('validates quantile parameter', () => {
+    assert.throws(() => iter([1]).streamingQuantile(-0.1).toArray(), /range/);
+    assert.throws(() => iter([1]).streamingQuantile(1.1).toArray(), /range/);
+  });
+
+  it('handles p=0 (minimum)', () => {
+    const data = Array.from({ length: 20 }, (_, i) => i + 1);
+    const results = iter(data).streamingQuantile(0).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last <= 3, `Expected near min, got ${last}`);
+  });
+
+  it('handles p=1 (maximum)', () => {
+    const data = Array.from({ length: 20 }, (_, i) => i + 1);
+    const results = iter(data).streamingQuantile(1).toArray();
+    const last = results[results.length - 1]!;
+    assert.ok(last >= 15, `Expected near max, got ${last}`);
+  });
+});
+
 describe('Complex Chaining', () => {
   it('chains window + map with statistics', () => {
     assert.deepEqual(

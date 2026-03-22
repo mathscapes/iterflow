@@ -100,6 +100,30 @@ export class Iterflow<T> implements Iterable<T> {
     return new Iterflow(transforms.windowedMax(this.src, size));
   }
 
+  streamingSkewness(this: Iterflow<number>): Iterflow<number> {
+    return new Iterflow(transforms.streamingSkewness(this.src));
+  }
+
+  streamingKurtosis(this: Iterflow<number>): Iterflow<number> {
+    return new Iterflow(transforms.streamingKurtosis(this.src));
+  }
+
+  streamingHistogram(this: Iterflow<number>, binCount: number, min: number, max: number): Iterflow<number[]> {
+    return new Iterflow(transforms.streamingHistogram(this.src, binCount, min, max));
+  }
+
+  streamingLinearRegression(this: Iterflow<[number, number]>): Iterflow<{ slope: number; intercept: number; rSquared: number }> {
+    return new Iterflow(transforms.streamingLinearRegression(this.src));
+  }
+
+  autoCorrelation(this: Iterflow<number>, lag: number): Iterflow<number> {
+    return new Iterflow(transforms.autoCorrelation(this.src, lag));
+  }
+
+  streamingQuantile(this: Iterflow<number>, p: number): Iterflow<number> {
+    return new Iterflow(transforms.streamingQuantile(this.src, p));
+  }
+
   // Terminals
   toArray(): T[] {
     return terminals.toArray(this.src);

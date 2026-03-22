@@ -1,6 +1,6 @@
 {
   "name": "@mathscapes/iterflow",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Composable streaming statistics pipelines for memory-efficient data processing",
   "type": "module",
   "main": "./dist/index.cjs",

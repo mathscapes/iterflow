@@ -57,3 +57,12 @@ export function validateAlphaRange(alpha: number, param: string): void {
     throw new RangeError(`${param} must be in range (0, 1]`);
   }
 }
+
+export function validateProbability(p: number, param: string): void {
+  if (!Number.isFinite(p)) {
+    throw new RangeError(`${param} must be finite`);
+  }
+  if (p < 0 || p > 1) {
+    throw new RangeError(`${param} must be in range [0, 1]`);
+  }
+}
