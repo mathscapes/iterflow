@@ -1,8 +1,10 @@
 /**
  * Run all benchmarks and output consolidated CSV
+ * Includes hardware metadata header for reproducibility
  */
 
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import { Bench } from 'tinybench';
 import { iter } from '../src/index.js';
 import { SCALES, TRANSACTION_CONFIG, PRICE_CONFIG, WINDOW_CONFIG, BENCHMARK_SCALES } from './config.js';
@@ -292,8 +294,133 @@ for (const scale of STDLIB_SCALES) {
   process.stderr.write(`05 N=${scale} done\n`);
 }
 
-// -- Output CSV --
+// -- 06: V2 Streaming Algorithms --
 
+const naiveQuantile = (data: number[], p: number): number => {
+  const sorted = [...data].sort((a, b) => a - b);
+  const idx = Math.ceil(p * sorted.length) - 1;
+  return sorted[Math.max(0, idx)]!;
+};
+
+const naiveSkewness = (data: number[]): number => {
+  const n = data.length;
+  const avg = data.reduce((s, v) => s + v, 0) / n;
+  let m2 = 0, m3 = 0;
+  for (const x of data) { const d = x - avg; m2 += d * d; m3 += d * d * d; }
+  m2 /= n; m3 /= n;
+  const s = Math.sqrt(m2);
+  return s === 0 ? 0 : m3 / (s * s * s);
+};
+
+const naiveKurtosis = (data: number[]): number => {
+  const n = data.length;
+  const avg = data.reduce((s, v) => s + v, 0) / n;
+  let m2 = 0, m4 = 0;
+  for (const x of data) { const d = x - avg; m2 += d * d; m4 += d * d * d * d; }
+  m2 /= n; m4 /= n;
+  return m2 === 0 ? 0 : (m4 / (m2 * m2)) - 3;
+};
+
+const naiveBatchOLS = (pairs: [number, number][]): { slope: number; intercept: number; rSquared: number } => {
+  const n = pairs.length;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (const [x, y] of pairs) { sx += x; sy += y; sxy += x * y; sxx += x * x; }
+  const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  const intercept = (sy - slope * sx) / n;
+  const yMean = sy / n;
+  let ssTot = 0, ssRes = 0;
+  for (const [x, y] of pairs) { ssTot += (y - yMean) ** 2; ssRes += (y - (slope * x + intercept)) ** 2; }
+  return { slope, intercept, rSquared: ssTot === 0 ? 0 : 1 - ssRes / ssTot };
+};
+
+const naiveAutoCorrelation = (data: number[], lag: number): number[] => {
+  const result: number[] = [];
+  for (let i = lag; i < data.length; i++) {
+    const window = data.slice(0, i + 1);
+    const n = window.length;
+    const avg = window.reduce((s, v) => s + v, 0) / n;
+    let cov = 0, vari = 0;
+    for (let j = 0; j < n; j++) { vari += (window[j]! - avg) ** 2; if (j >= lag) cov += (window[j]! - avg) * (window[j - lag]! - avg); }
+    result.push(vari === 0 ? 0 : cov / vari);
+  }
+  return result;
+};
+
+const generatePairs = (count: number): [number, number][] =>
+  Array.from({ length: count }, (_, i) => [i, 2.5 * i + 10 + (Math.random() - 0.5) * 20] as [number, number]);
+
+{
+  const data = generateData(statScale);
+  const bench = new Bench();
+  bench.add('iterflow-p-square', () => iter(data).streamingQuantile(0.5).toArray());
+  bench.add('naive-sort-quantile', () => {
+    const r: number[] = [];
+    for (let i = 1; i <= data.length; i++) r.push(naiveQuantile(data.slice(0, i), 0.5));
+    return r;
+  });
+  await run('06-streaming-quantile', statScale, bench);
+  process.stderr.write(`06 streaming-quantile done\n`);
+}
+
+{
+  const data = generateData(statScale);
+  const bench = new Bench();
+  bench.add('iterflow-streaming', () => iter(data).streamingSkewness().toArray());
+  bench.add('naive-batch', () => {
+    const r: number[] = [];
+    for (let i = 3; i <= data.length; i++) r.push(naiveSkewness(data.slice(0, i)));
+    return r;
+  });
+  await run('06-streaming-skewness', statScale, bench);
+  process.stderr.write(`06 streaming-skewness done\n`);
+}
+
+{
+  const data = generateData(statScale);
+  const bench = new Bench();
+  bench.add('iterflow-streaming', () => iter(data).streamingKurtosis().toArray());
+  bench.add('naive-batch', () => {
+    const r: number[] = [];
+    for (let i = 4; i <= data.length; i++) r.push(naiveKurtosis(data.slice(0, i)));
+    return r;
+  });
+  await run('06-streaming-kurtosis', statScale, bench);
+  process.stderr.write(`06 streaming-kurtosis done\n`);
+}
+
+{
+  const pairs = generatePairs(statScale);
+  const bench = new Bench();
+  bench.add('iterflow-streaming', () => iter(pairs).streamingLinearRegression().toArray());
+  bench.add('naive-batch-ols', () => {
+    const r: { slope: number; intercept: number; rSquared: number }[] = [];
+    for (let i = 2; i <= pairs.length; i++) r.push(naiveBatchOLS(pairs.slice(0, i)));
+    return r;
+  });
+  await run('06-streaming-regression', statScale, bench);
+  process.stderr.write(`06 streaming-regression done\n`);
+}
+
+{
+  const data = generateData(statScale);
+  const lag = 10;
+  const bench = new Bench();
+  bench.add('iterflow-streaming', () => iter(data).autoCorrelation(lag).toArray());
+  bench.add('naive-batch', () => naiveAutoCorrelation(data, lag));
+  await run('06-autocorrelation', statScale, bench);
+  process.stderr.write(`06 autocorrelation done\n`);
+}
+
+// -- Output CSV with hardware metadata header --
+
+const cpus = os.cpus();
+const cpuModel = cpus[0]?.model ?? 'unknown';
+const ramGB = (os.totalmem() / (1024 ** 3)).toFixed(1);
+const platform = `${os.type()} ${os.release()} ${os.arch()}`;
+const nodeVersion = process.version;
+const timestamp = new Date().toISOString();
+
+console.log(`# Hardware: ${cpuModel} | ${ramGB} GB RAM | ${platform} | Node.js ${nodeVersion} | ${timestamp}`);
 console.log('benchmark,variant,scale,ops_per_sec,avg_time_ms,samples,throughput_sd,throughput_rme_pct,throughput_p75,throughput_p99,latency_sd,latency_p75,latency_p99');
 for (const r of rows) {
   console.log(`${r.benchmark},${r.variant},${r.scale},${r.opsPerSec.toFixed(2)},${r.avgTimeMs.toFixed(6)},${r.samples},${r.throughputSd.toFixed(2)},${r.throughputRme.toFixed(4)},${r.throughputP75.toFixed(2)},${r.throughputP99.toFixed(2)},${r.latencySd.toFixed(6)},${r.latencyP75.toFixed(6)},${r.latencyP99.toFixed(6)}`);
